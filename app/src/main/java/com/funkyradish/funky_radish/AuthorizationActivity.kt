@@ -1,12 +1,11 @@
 package com.funkyradish.funky_radish
 
-import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.widget.AbsListView
 import android.widget.EditText
-
-const val EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE"
+import com.android.volley.toolbox.Volley
 
 class AuthorizationActivity : AppCompatActivity() {
 
@@ -17,11 +16,13 @@ class AuthorizationActivity : AppCompatActivity() {
 
     /** Called when the user taps the Send button */
     fun sendMessage(view: View) {
-        val editText = findViewById<EditText>(R.id.editText)
-        val message = editText.text.toString()
-        val intent = Intent(this, SignupActivity::class.java).apply {
-            putExtra(EXTRA_MESSAGE, message)
-        }
-        startActivity(intent)
+        val username = findViewById<EditText>(R.id.editText).text.toString()
+        val email = findViewById<EditText>(R.id.editText2).text.toString()
+        val password = findViewById<EditText>(R.id.editText3).text.toString()
+
+        // setting up a Volley RequestQueue
+        val queue = Volley.newRequestQueue(this)
+        createUser(this, queue, username, email, password)
     }
 }
+
