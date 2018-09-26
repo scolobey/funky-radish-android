@@ -1,17 +1,18 @@
 package com.funkyradish.funky_radish
 
+import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
-import android.widget.AbsListView
 import android.widget.EditText
 import com.android.volley.toolbox.Volley
 
-class AuthorizationActivity : AppCompatActivity() {
+class SignupActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_authorization)
+        setContentView(R.layout.signup_authorization)
     }
 
     /** Called when the user taps the Send button */
@@ -23,6 +24,12 @@ class AuthorizationActivity : AppCompatActivity() {
         // setting up a Volley RequestQueue
         val queue = Volley.newRequestQueue(this)
         createUser(this, queue, username, email, password)
+    }
+
+    fun loginSegue(view: View) {
+        val intent = Intent(this, LoginActivity::class.java).apply {
+        }
+        startActivity(intent)
     }
 }
 

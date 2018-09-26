@@ -6,13 +6,46 @@ import android.util.Log
 import android.widget.Toast
 import com.android.volley.RequestQueue
 import com.android.volley.Response
+import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import org.json.JSONObject
 import com.google.gson.GsonBuilder
+import org.json.JSONArray
 
 val ENDPOINT = "https://funky-radish-api.herokuapp.com/users"
 val ENDPOINT2 = "https://funky-radish-api.herokuapp.com/authenticate"
+val ENDPOINT3 = "https://funky-radish-api.herokuapp.com/recipes"
+
+fun loadRecipes(activity: Activity, queue: RequestQueue, token: String) {
+
+    // Build recipe request
+    val recipeRequest = object : JsonArrayRequest(Method.GET, ENDPOINT3, null,
+            Response.Listener<JSONArray> { response ->
+                val body = response.toString()
+//                val gson = GsonBuilder().create()
+//                val userResponse = gson.fromJson(body, RecipeResponse::class.java)
+                Log.d("API", body)
+            },
+            Response.ErrorListener { error ->
+                Log.d("API", "There was an error getting your recipes.")
+                Toast.makeText(
+                        activity.applicationContext,
+                        error.toString(),
+                        Toast.LENGTH_SHORT).show()
+            }
+    ) {
+        override fun getHeaders(): Map<String, String> {
+            val headers = HashMap<String, String>()
+            headers.put("x-access-token", token)
+            return headers
+        }
+    }
+
+    // Add the request to the Volley queue
+    queue.add(recipeRequest)
+
+}
 
 fun createUser(activity: Activity, queue: RequestQueue, username: String, email: String, password: String) {
 
@@ -103,3 +136,7 @@ class UserResponse(val message: String, val data: User)
 class User(val email: String, val name: String, val _id: String)
 
 class TokenResponse(val success: Boolean, val message: String, val token: String)
+
+class RecipeResponse: JSONArray()
+
+//class Recipe(val title: String, val _id: String)
