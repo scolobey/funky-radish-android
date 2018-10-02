@@ -11,6 +11,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import org.json.JSONObject
 import com.google.gson.GsonBuilder
+import io.realm.Realm
 import org.json.JSONArray
 
 val ENDPOINT = "https://funky-radish-api.herokuapp.com/users"
@@ -19,12 +20,24 @@ val ENDPOINT3 = "https://funky-radish-api.herokuapp.com/recipes"
 
 fun loadRecipes(activity: Activity, queue: RequestQueue, token: String) {
 
+    Log.d("Realm", "uploading recipes.")
+
     // Build recipe request
     val recipeRequest = object : JsonArrayRequest(Method.GET, ENDPOINT3, null,
             Response.Listener<JSONArray> { response ->
                 val body = response.toString()
-//                val gson = GsonBuilder().create()
-//                val userResponse = gson.fromJson(body, RecipeResponse::class.java)
+
+                val realm = Realm.getDefaultInstance()
+
+                realm.executeTransaction { realm ->
+                    val inputStream = body
+                    try {
+                        realm.createAllFromJson(Recipe::class.java, inputStream)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
                 Log.d("API", body)
             },
             Response.ErrorListener { error ->
@@ -74,6 +87,7 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
                         activity.applicationContext,
                         error.toString(),
                         Toast.LENGTH_SHORT).show()
+
             }
     ) {
         override fun getHeaders(): Map<String, String> {

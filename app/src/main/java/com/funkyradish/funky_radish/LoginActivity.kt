@@ -18,6 +18,10 @@ class LoginActivity : AppCompatActivity() {
         val email = findViewById<EditText>(R.id.loginEmailField).text.toString()
         val password = findViewById<EditText>(R.id.loginPasswordField).text.toString()
 
+        // start loading indicator
+
+        // pass a callback to kill the loader and dismiss the view
+
         // setting up a Volley RequestQueue
         val queue = Volley.newRequestQueue(this)
         getToken(this, queue, email, password)

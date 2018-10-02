@@ -15,4 +15,9 @@
         android:id="@+id/action_signup"
         android:title="@string/settings_signup"
         app:showAsAction="never"></item>
+
+    <item
+        android:id="@+id/action_reload"
+        android:title="@string/settings_reload"
+        app:showAsAction="never"></item>
 </menu>
