@@ -13,6 +13,15 @@ import org.json.JSONObject
 import com.google.gson.GsonBuilder
 import io.realm.Realm
 import org.json.JSONArray
+import io.realm.SyncUser.fromJson
+import com.google.gson.Gson
+import io.realm.RealmList
+import com.google.gson.reflect.TypeToken
+import io.realm.RealmObject
+import com.google.gson.FieldAttributes
+import com.google.gson.ExclusionStrategy
+
+
 
 val ENDPOINT = "https://funky-radish-api.herokuapp.com/users"
 val ENDPOINT2 = "https://funky-radish-api.herokuapp.com/authenticate"
@@ -29,6 +38,29 @@ fun loadRecipes(activity: Activity, queue: RequestQueue, token: String) {
 
                 val realm = Realm.getDefaultInstance()
 
+//                // the exclusion is for the Realm stackoverflow crash
+//                val gsonBuilder = GsonBuilder()
+//                        .setExclusionStrategies(object : ExclusionStrategy {
+//                            override fun shouldSkipField(f: FieldAttributes): Boolean {
+//                                return f.declaringClass == RealmObject::class.java
+//                            }
+//
+//                            override fun shouldSkipClass(clazz: Class<*>): Boolean {
+//                                return false
+//                            }
+//                        })
+//                // register the deserializer
+//                gsonBuilder.registerTypeAdapter(object : TypeToken<RealmList<Ingredient>>() {
+//
+//                }.type, RealmStringDeserializer())
+//
+//                val gson = gsonBuilder.create()
+//
+//                // parse the Json
+//                val myObject = gson.fromJson(body, Recipe::class.java)
+//
+//                Log.d("API", myObject.toString())
+
                 realm.executeTransaction { realm ->
                     val inputStream = body
                     try {
@@ -38,7 +70,7 @@ fun loadRecipes(activity: Activity, queue: RequestQueue, token: String) {
                     }
                 }
 
-                Log.d("API", body)
+
             },
             Response.ErrorListener { error ->
                 Log.d("API", "There was an error getting your recipes.")

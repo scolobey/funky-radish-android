@@ -91,10 +91,16 @@ class RecipeSearchActivity : AppCompatActivity() {
                 return true
             }
             R.id.action_logout -> {
-                println("logout")
                 val editor = preferences.edit()
                 editor.putString(FR_TOKEN, "")
                 editor.apply()
+
+                //remove realm files
+                var recipeModel = RecipeModel()
+                val realm = Realm.getDefaultInstance()
+                recipeModel.removeRecipes(realm)
+
+
                 return true
             }
             R.id.action_signup -> {
@@ -114,10 +120,10 @@ class RecipeSearchActivity : AppCompatActivity() {
     private class RecipeListAdapter(context: Context): BaseAdapter() {
         private val mContext: Context
 
+        var recipeModel = RecipeModel()
         val realm = Realm.getDefaultInstance()
-        private val recipes = realm.where(Recipe::class.java).findAll()
 
-//        private val recipes = arrayListOf<String>("boners", "doobies", "titties")
+        private val recipes = recipeModel.getRecipes(realm)
 
         init {
             mContext = context
@@ -139,11 +145,25 @@ class RecipeSearchActivity : AppCompatActivity() {
             val layoutInflater = LayoutInflater.from(mContext)
             val recipeRow = layoutInflater.inflate(R.layout.recipe_row, viewGroup, false)
 
+            val recipe = recipes.get(position)!!
+
             val recipeTitleView = recipeRow.findViewById<TextView>(R.id.recipeTitle)
-            recipeTitleView.text = recipes.get(position)!!.title
+            recipeTitleView.text = recipe.title
 
             val recipeIndexView = recipeRow.findViewById<TextView>(R.id.recipeIndex)
             recipeIndexView.text = "index is: $position"
+
+            val recipeUpdatedView = recipeRow.findViewById<TextView>(R.id.recipeUpdatedAt)
+            recipeUpdatedView.text = recipe.updatedAt
+
+            val recipeIdView = recipeRow.findViewById<TextView>(R.id.recipeId)
+            recipeIdView.text = recipe._id
+
+            val recipeIngredientsView = recipeRow.findViewById<TextView>(R.id.recipeIngredients)
+            recipeIngredientsView.text = recipe.ingredients!!.first()
+
+            val recipeDirectionsView = recipeRow.findViewById<TextView>(R.id.recipeDirections)
+            recipeDirectionsView.text = recipe.directions!!.first()
 
             return recipeRow
         }
