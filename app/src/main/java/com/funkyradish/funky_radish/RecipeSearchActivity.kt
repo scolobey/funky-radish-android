@@ -6,12 +6,13 @@ import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.v7.app.AlertDialog
 import android.content.Intent
+import android.support.v7.widget.LinearLayoutManager
 import android.view.*
 import android.widget.BaseAdapter
-import android.widget.ListView
 import android.widget.TextView
 import com.android.volley.toolbox.Volley
 import io.realm.Realm
+import kotlinx.android.synthetic.main.activity_recipe_search.*
 
 class RecipeSearchActivity : AppCompatActivity() {
 
@@ -21,10 +22,8 @@ class RecipeSearchActivity : AppCompatActivity() {
         setContentView(R.layout.activity_recipe_search)
         setSupportActionBar(findViewById(R.id.toolbar))
 
-        //Load recipes from realm and place them in a list
-        val listView = findViewById<ListView>(R.id.recipe_listview)
-
-        listView.adapter = RecipeListAdapter(this)
+        recipe_list_recycler_view.layoutManager =LinearLayoutManager(this)
+        recipe_list_recycler_view.adapter = RecipeListAdapter()
 
         val FR_TOKEN = "fr_token"
         val preferences = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext())
@@ -115,57 +114,5 @@ class RecipeSearchActivity : AppCompatActivity() {
         }
 
         return super.onOptionsItemSelected(item)
-    }
-
-    private class RecipeListAdapter(context: Context): BaseAdapter() {
-        private val mContext: Context
-
-        var recipeModel = RecipeModel()
-        val realm = Realm.getDefaultInstance()
-
-        private val recipes = recipeModel.getRecipes(realm)
-
-        init {
-            mContext = context
-        }
-
-        override fun getItemId(position: Int): Long {
-            return position.toLong()
-        }
-
-        override fun getItem(position: Int): Any {
-            return "test string"
-        }
-
-        override fun getCount(): Int {
-            return recipes.size
-        }
-
-        override fun getView(position: Int, convertView: View?, viewGroup: ViewGroup?): View {
-            val layoutInflater = LayoutInflater.from(mContext)
-            val recipeRow = layoutInflater.inflate(R.layout.recipe_row, viewGroup, false)
-
-            val recipe = recipes.get(position)!!
-
-            val recipeTitleView = recipeRow.findViewById<TextView>(R.id.recipeTitle)
-            recipeTitleView.text = recipe.title
-
-            val recipeIndexView = recipeRow.findViewById<TextView>(R.id.recipeIndex)
-            recipeIndexView.text = "index is: $position"
-
-            val recipeUpdatedView = recipeRow.findViewById<TextView>(R.id.recipeUpdatedAt)
-            recipeUpdatedView.text = recipe.updatedAt
-
-            val recipeIdView = recipeRow.findViewById<TextView>(R.id.recipeId)
-            recipeIdView.text = recipe._id
-
-            val recipeIngredientsView = recipeRow.findViewById<TextView>(R.id.recipeIngredients)
-            recipeIngredientsView.text = recipe.ingredients!!.first()
-
-            val recipeDirectionsView = recipeRow.findViewById<TextView>(R.id.recipeDirections)
-            recipeDirectionsView.text = recipe.directions!!.first()
-
-            return recipeRow
-        }
     }
 }
