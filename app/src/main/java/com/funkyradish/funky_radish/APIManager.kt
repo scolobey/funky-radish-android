@@ -1,7 +1,9 @@
 package com.funkyradish.funky_radish
 
 import android.app.Activity
+import android.content.Intent
 import android.preference.PreferenceManager
+import android.support.v4.content.ContextCompat.startActivity
 import android.util.Log
 import android.widget.Toast
 import com.android.volley.RequestQueue
@@ -21,8 +23,6 @@ import io.realm.RealmObject
 import com.google.gson.FieldAttributes
 import com.google.gson.ExclusionStrategy
 
-
-
 val ENDPOINT = "https://funky-radish-api.herokuapp.com/users"
 val ENDPOINT2 = "https://funky-radish-api.herokuapp.com/authenticate"
 val ENDPOINT3 = "https://funky-radish-api.herokuapp.com/recipes"
@@ -37,29 +37,6 @@ fun loadRecipes(activity: Activity, queue: RequestQueue, token: String) {
                 val body = response.toString()
 
                 val realm = Realm.getDefaultInstance()
-
-//                // the exclusion is for the Realm stackoverflow crash
-//                val gsonBuilder = GsonBuilder()
-//                        .setExclusionStrategies(object : ExclusionStrategy {
-//                            override fun shouldSkipField(f: FieldAttributes): Boolean {
-//                                return f.declaringClass == RealmObject::class.java
-//                            }
-//
-//                            override fun shouldSkipClass(clazz: Class<*>): Boolean {
-//                                return false
-//                            }
-//                        })
-//                // register the deserializer
-//                gsonBuilder.registerTypeAdapter(object : TypeToken<RealmList<Ingredient>>() {
-//
-//                }.type, RealmStringDeserializer())
-//
-//                val gson = gsonBuilder.create()
-//
-//                // parse the Json
-//                val myObject = gson.fromJson(body, Recipe::class.java)
-//
-//                Log.d("API", myObject.toString())
 
                 realm.executeTransaction { realm ->
                     val inputStream = body
@@ -89,7 +66,47 @@ fun loadRecipes(activity: Activity, queue: RequestQueue, token: String) {
 
     // Add the request to the Volley queue
     queue.add(recipeRequest)
+}
 
+fun saveRecipe(activity: Activity, queue: RequestQueue, title: String?, ingredients: List<String>, directions: List<String>) {
+    Log.d("API", "Saving recipe.")
+
+    // Prepare a space for your token in preferences.
+    val FR_TOKEN = "fr_token"
+    val preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
+    var token = preferences.getString(FR_TOKEN, "")
+
+    println(token)
+
+    // What if the token is expired?
+    val json = JSONObject().apply({
+        put("title", title)
+        put("ingredients", ingredients)
+        put("directions", directions)
+    })
+
+    val recipePost = object : JsonObjectRequest(Method.POST, ENDPOINT3, json,
+            Response.Listener { response ->
+                val body = response.toString()
+                println(body)
+
+                Log.d("API", "Recipe saved.")
+            },
+            Response.ErrorListener { error ->
+                Toast.makeText(
+                        activity.applicationContext,
+                        "It looks like your token is expired. Please login.",
+                        Toast.LENGTH_SHORT).show()
+            }
+    ) {
+        override fun getHeaders(): Map<String, String> {
+            val headers = HashMap<String, String>()
+            headers.put("x-access-token", token)
+            return headers
+        }
+    }
+
+    queue.add(recipePost)
 }
 
 fun createUser(activity: Activity, queue: RequestQueue, username: String, email: String, password: String) {
@@ -182,7 +199,3 @@ class UserResponse(val message: String, val data: User)
 class User(val email: String, val name: String, val _id: String)
 
 class TokenResponse(val success: Boolean, val message: String, val token: String)
-
-class RecipeResponse: JSONArray()
-
-//class Recipe(val title: String, val _id: String)

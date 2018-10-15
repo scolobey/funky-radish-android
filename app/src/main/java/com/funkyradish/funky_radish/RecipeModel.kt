@@ -7,7 +7,13 @@ class RecipeModel : RecipeInterface {
     override fun addRecipe(realm: Realm, recipe: Recipe): Boolean {
         try {
             realm.beginTransaction()
-            realm.copyToRealmOrUpdate(recipe)
+
+            if(recipe!=null) {
+                realm.copyToRealmOrUpdate(recipe)
+            }
+            else {
+                realm.copyToRealmOrUpdate(Recipe())
+            }
             realm.commitTransaction()
             return true
         } catch (e: Exception) {

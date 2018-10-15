@@ -1,6 +1,5 @@
 package com.funkyradish.funky_radish
 
-import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -8,8 +7,6 @@ import android.support.v7.app.AlertDialog
 import android.content.Intent
 import android.support.v7.widget.LinearLayoutManager
 import android.view.*
-import android.widget.BaseAdapter
-import android.widget.TextView
 import com.android.volley.toolbox.Volley
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_search.*
@@ -24,6 +21,12 @@ class RecipeSearchActivity : AppCompatActivity() {
 
         recipe_list_recycler_view.layoutManager =LinearLayoutManager(this)
         recipe_list_recycler_view.adapter = RecipeListAdapter()
+
+        createRecipeButton.setOnClickListener {
+            val intent = Intent(this, RecipeViewActivity::class.java)
+            intent.putExtra("rid", "")
+            startActivity(intent)
+        }
 
         val FR_TOKEN = "fr_token"
         val preferences = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext())
