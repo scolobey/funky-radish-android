@@ -20,4 +20,9 @@
         android:id="@+id/action_reload"
         android:title="@string/settings_reload"
         app:showAsAction="never"></item>
+
+    <item
+        android:id="@+id/toggle_offline_mode"
+        android:title="@string/settings_offline_mode"
+        app:showAsAction="never"></item>
 </menu>

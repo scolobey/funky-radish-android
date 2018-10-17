@@ -15,66 +15,62 @@ class RecipeSearchActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_recipe_search)
         setSupportActionBar(findViewById(R.id.toolbar))
 
-        recipe_list_recycler_view.layoutManager =LinearLayoutManager(this)
-        recipe_list_recycler_view.adapter = RecipeListAdapter()
+        prepareRecipeListView()
+        prepareCreateRecipeButton()
 
+        var token = checkForToken(this.getApplicationContext())
+
+        if (token.length > 0 && !isOffline(this.applicationContext)) {
+            val queue = Volley.newRequestQueue(this)
+            loadRecipes(this, queue, token)
+        }
+        else {
+            showAuthorizationDialog()
+        }
+    }
+
+    fun showAuthorizationDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Hi. How would you like to get started?")
+        val array = arrayOf("Login", "Signup", "Continue offline")
+        builder.setItems(array) {_, which ->
+            val selected = array[which]
+            when (selected) {
+                "Login" -> {
+                    val intent = Intent(this, LoginActivity::class.java).apply {}
+                    startActivity(intent)
+                }
+                "Signup" -> {
+                    val intent = Intent(this, SignupActivity::class.java).apply {}
+                    startActivity(intent)
+                }
+                else -> {
+                    toggleOfflineMode(this.getApplicationContext())
+                }
+            }
+        }
+
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+    fun prepareCreateRecipeButton() {
         createRecipeButton.setOnClickListener {
             val intent = Intent(this, RecipeViewActivity::class.java)
             intent.putExtra("rid", "")
             startActivity(intent)
         }
-
-        val FR_TOKEN = "fr_token"
-        val preferences = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext())
-        var token = preferences.getString(FR_TOKEN, "")
-
-        val queue = Volley.newRequestQueue(this)
-
-        if (token.length > 0) {
-            loadRecipes(this, queue, token)
-        }
-        else {
-
-            val array = arrayOf("Login", "Signup", "Continue offline")
-
-            // Initialize a new instance of alert dialog builder object
-            val builder = AlertDialog.Builder(this)
-
-            // Set a title for alert dialog
-            builder.setTitle("Hi. How would you like to get started?")
-
-            builder.setItems(array,{_, which ->
-                // Get the dialog selected item
-                val selected = array[which]
-
-                when (selected) {
-                    "Login" -> {
-                        val intent = Intent(this, LoginActivity::class.java).apply {}
-                        startActivity(intent)
-                    }
-                    "Signup" -> {
-                        val intent = Intent(this, SignupActivity::class.java).apply {}
-                        startActivity(intent)
-                    }
-                    else -> {
-                        println("I dunno.")
-                    }
-                }
-            })
-
-            // Create a new AlertDialog using builder object
-            val dialog = builder.create()
-
-            // Finally, display the alert dialog
-            dialog.show()
-        }
-
     }
 
+    fun prepareRecipeListView() {
+        recipe_list_recycler_view.layoutManager = LinearLayoutManager(this)
+        recipe_list_recycler_view.adapter = RecipeListAdapter()
+    }
+
+    // Add the options menu to the toolbar
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         val inflater = menuInflater
         inflater.inflate(R.menu.menu, menu)
@@ -82,9 +78,6 @@ class RecipeSearchActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val FR_TOKEN = "fr_token"
-        val preferences = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext())
-
         when (item.itemId) {
             R.id.action_login -> {
                 val intent = Intent(this, LoginActivity::class.java).apply {
@@ -93,15 +86,12 @@ class RecipeSearchActivity : AppCompatActivity() {
                 return true
             }
             R.id.action_logout -> {
-                val editor = preferences.edit()
-                editor.putString(FR_TOKEN, "")
-                editor.apply()
+                setToken(this.getApplicationContext(), "")
 
                 //remove realm files
                 var recipeModel = RecipeModel()
                 val realm = Realm.getDefaultInstance()
                 recipeModel.removeRecipes(realm)
-
 
                 return true
             }
@@ -109,6 +99,10 @@ class RecipeSearchActivity : AppCompatActivity() {
                 val intent = Intent(this, SignupActivity::class.java).apply {
                 }
                 startActivity(intent)
+                return true
+            }
+            R.id.toggle_offline_mode -> {
+                toggleOfflineMode(this.getApplicationContext())
                 return true
             }
             R.id.action_reload -> {

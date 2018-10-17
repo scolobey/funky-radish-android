@@ -1,6 +1,7 @@
 package com.funkyradish.funky_radish
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.preference.PreferenceManager
 import android.support.v4.content.ContextCompat.startActivity
@@ -26,6 +27,34 @@ import com.google.gson.ExclusionStrategy
 val ENDPOINT = "https://funky-radish-api.herokuapp.com/users"
 val ENDPOINT2 = "https://funky-radish-api.herokuapp.com/authenticate"
 val ENDPOINT3 = "https://funky-radish-api.herokuapp.com/recipes"
+
+val FR_TOKEN = "fr_token"
+val OFFLINE = "fr_offline"
+
+fun checkForToken(context: Context): String {
+    val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+    return preferences.getString(FR_TOKEN, "")
+}
+
+fun setToken(context: Context, token: String) {
+    val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+    val editor = preferences.edit()
+    editor.putString(FR_TOKEN, token)
+    editor.apply()
+}
+
+fun isOffline(context: Context): Boolean {
+    val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+    return preferences.getBoolean(OFFLINE, false)
+}
+
+fun toggleOfflineMode(context: Context) {
+    val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+    val offline = preferences.getBoolean(OFFLINE, false)
+    val editor = preferences.edit()
+    editor.putBoolean(OFFLINE, !offline)
+    editor.apply()
+}
 
 fun loadRecipes(activity: Activity, queue: RequestQueue, token: String) {
 
