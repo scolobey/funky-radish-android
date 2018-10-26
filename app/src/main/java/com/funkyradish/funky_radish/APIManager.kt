@@ -65,6 +65,8 @@ fun loadRecipes(activity: Activity, queue: RequestQueue, token: String) {
             Response.Listener<JSONArray> { response ->
                 val body = response.toString()
 
+                println(body)
+
                 val realm = Realm.getDefaultInstance()
 
                 realm.executeTransaction { realm ->
@@ -100,12 +102,7 @@ fun loadRecipes(activity: Activity, queue: RequestQueue, token: String) {
 fun saveRecipe(activity: Activity, queue: RequestQueue, title: String?, ingredients: List<String>, directions: List<String>) {
     Log.d("API", "Saving recipe.")
 
-    // Prepare a space for your token in preferences.
-    val FR_TOKEN = "fr_token"
-    val preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
-    var token = preferences.getString(FR_TOKEN, "")
-
-    println(token)
+    val token = checkForToken(activity.getApplicationContext())
 
     // What if the token is expired?
     val json = JSONObject().apply({

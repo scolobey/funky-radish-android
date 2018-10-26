@@ -1,60 +1,61 @@
 package com.funkyradish.funky_radish
 
+import android.content.Context
 import android.content.Intent
+import android.support.v7.view.menu.ActionMenuItemView
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import io.realm.Realm
-import kotlinx.android.synthetic.main.activity_recipe_view.*
+import io.realm.RealmResults
 import kotlinx.android.synthetic.main.recipe_row.view.*
 
-
-class RecipeListAdapter: RecyclerView.Adapter<RecipeViewHolder>() {
-
-    var recipeModel = RecipeModel()
-    val realm = Realm.getDefaultInstance()
-
-    val recipes = recipeModel.getRecipes(realm)
-
+class RecipeListAdapter(val recipes: RealmResults<Recipe>, val context: Context): RecyclerView.Adapter<RecipeViewHolder>() {
 
     override fun getItemCount(): Int {
         return recipes.size
     }
 
     override fun onCreateViewHolder(p0: ViewGroup, p1: Int): RecipeViewHolder {
+        println(p0)
         val layoutInflater = LayoutInflater.from(p0.context)
         val recipeCell = layoutInflater.inflate(R.layout.recipe_row, p0, false)
-        return RecipeViewHolder(recipeCell, recipes.get(p1)!!)
+        return RecipeViewHolder(recipeCell)
     }
 
     override fun onBindViewHolder(p0: RecipeViewHolder, p1: Int) {
-        p0.view.recipeViewTitle.text = p0.recipe!!.title
-
-        val ings = p0.recipe!!.ingredients!!
-        val ingString = StringBuilder()
-
-        for (i in 0 until ings!!.size) {
-            println(ings!![i])
-            ingString.append(ings!![i]).append("\n")
-
-            // need to trim
-        }
-
-        val finalIngredientString = ingString.toString()
-        p0.view.ingredientContainer.text = finalIngredientString
+        (p0 as RecipeViewHolder).bind(recipes.get(p1)!!)
     }
 
 }
 
-class RecipeViewHolder(val view: View, val recipe: Recipe): RecyclerView.ViewHolder(view) {
+class RecipeViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
 
-    init {
-        view.setOnClickListener {
-            println(recipe.toString())
-            val intent = Intent(view.context, RecipeViewActivity::class.java)
+    fun bind(recipe: Recipe) {
+
+        val ings = recipe.ingredients
+
+//        val strizzle =
+
+//        val ingString = StringBuilder()
+//
+//        println()
+//
+//        for (i in ings) {
+//            println(i)
+//
+//            ingString.append(i)
+//        }
+
+//        val finalIngredientString = ingString.toString()
+
+        itemView.recipeViewTitle.text = recipe.title
+        itemView.ingredientContainer.text = ings.joinToString("\n")
+
+        itemView.setOnClickListener {
+            val intent = Intent(itemView.context, RecipeViewActivity::class.java)
             intent.putExtra("rid", recipe._id)
-            view.context.startActivity(intent)
+            itemView.context.startActivity(intent)
         }
     }
 

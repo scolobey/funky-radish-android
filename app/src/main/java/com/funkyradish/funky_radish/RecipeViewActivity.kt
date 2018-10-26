@@ -5,68 +5,91 @@ import android.os.Bundle
 import android.widget.Button
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_view.*
-import com.android.volley.toolbox.Volley
 import io.realm.RealmList
-
 
 class RecipeViewActivity : AppCompatActivity() {
 
     var directionView: Boolean = true
-    var ingredientArray = listOf<String>()
-    var directionArray = listOf<String>()
+
+    val realm = Realm.getDefaultInstance()
+    var recipe = Recipe()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_recipe_view)
 
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        println(recipe._id)
 
-        val saveButton = findViewById(R.id.action_save) as Button
+        loadRecipe()
+        prepareToolbar()
 
-        var recipeModel = RecipeModel()
-        val realm = Realm.getDefaultInstance()
-        val recipeID: String = intent.getStringExtra("rid")
-        var recipe = Recipe()
+        prepareRecipeView()
 
-        if(recipeID.length > 0) {
-            recipe = recipeModel.getRecipe(realm, recipeID)
-        }
-        else {
-            try {
-                realm.beginTransaction()
-                recipe = realm.createObject(Recipe::class.java)
-                realm.commitTransaction()
-            } catch (e: Exception) {
-                e.printStackTrace()
+        trashButton.setOnClickListener {
+            println(recipe._id)
+            realm.executeTransaction {
+                recipe.deleteFromRealm()
             }
         }
 
-        prepareRecipeView(recipe)
-
         recipeViewSwitch.setOnClickListener {
             directionView = !directionView
-            prepareRecipeView(recipe)
+            prepareRecipeView()
         }
+    }
+
+    private fun loadRecipe() {
+        // Load recipe if an id is provided. Create a new recipe if id is not provided.
+        val recipeID: String = intent.getStringExtra("rid")
+//        val recipeTitle: String = intent.getStringExtra("recipe_title")
+
+        recipe = realm.where(Recipe::class.java).equalTo("_id", recipeID).findFirst()!!
+
+//        if(recipeID.isNotEmpty()) {
+//
+//        }
+//        else {
+//            recipe.title = recipeTitle
+//
+//            try {
+//                realm.beginTransaction()
+//                realm.copyToRealmOrUpdate(recipe)
+//                realm.commitTransaction()
+//            } catch (e: Exception) {
+//                println(e)
+//            }
+//
+//            // if the app is online, we should save the recipe right away?
+//            //        val queue = Volley.newRequestQueue(this)
+//            //        saveRecipe(this, queue, recipeTitle, ingredientArray, directionArray)
+//        }
+//        realm.close()
+    }
+
+    private fun prepareToolbar() {
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        prepareSaveButton()
+    }
+
+    private fun prepareSaveButton() {
+        val saveButton = findViewById<Button>(R.id.action_save)
 
         saveButton.setOnClickListener {
 
-            val realm = Realm.getDefaultInstance()
-            val queue = Volley.newRequestQueue(this)
-
             if(directionView) {
                 // convert text to realmList and set recipe.directions
-                directionArray = recipeViewContent.text.split("\n")
-                var recipeRealmList = RealmList<String>()
+                var directionArray = recipeViewContent.text.split("\n")
+                var recipeDirectionRealmList = RealmList<String>()
 
                 for (i in directionArray) {
-                    recipeRealmList.add(i)
+                    recipeDirectionRealmList.add(i)
                 }
 
-                realm.executeTransaction { realm ->
+                realm.executeTransaction { _ ->
                     try {
-                        recipe.directions = recipeRealmList
-                        saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
+                        recipe.directions = recipeDirectionRealmList
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -74,17 +97,18 @@ class RecipeViewActivity : AppCompatActivity() {
             }
             else {
                 // convert text to realmList and set recipe.ingredients
-                ingredientArray = recipeViewContent.text.split("\n")
-                var recipeRealmList = RealmList<String>()
+                var ingredientArray = recipeViewContent.text.split("\n")
+                var recipeIngredientRealmList = RealmList<String>()
 
                 for (i in ingredientArray) {
-                    recipeRealmList.add(i)
+                    recipeIngredientRealmList.add(i)
+                    //                        saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
                 }
 
                 realm.executeTransaction { realm ->
                     try {
-                        recipe.ingredients = recipeRealmList
-                        saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
+                        recipe.ingredients = recipeIngredientRealmList
+//                        saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -93,21 +117,27 @@ class RecipeViewActivity : AppCompatActivity() {
         }
     }
 
-    fun prepareRecipeView(recipe: Recipe) {
-
+    private fun prepareRecipeView() {
         if(directionView) {
             recipeViewTitle.text = "Directions"
 
-            val dirs = recipe.directions
-            val dirString = StringBuilder()
+            if(recipe.directions.size > 0) {
+                val dirs = recipe.directions
+                val dirString = StringBuilder()
 
-            for (i in 0 until dirs!!.size) {
-                println(dirs!![i])
-                dirString.append(dirs!![i]).append("\n")
+                for (i in 0 until dirs!!.size) {
+                    println(dirs!![i])
+                    dirString.append(dirs!![i]).append("\n")
+                }
+
+                val finalIngredientString = dirString.toString()
+                recipeViewContent.setText(finalIngredientString)
             }
 
-            val finalIngredientString = dirString.toString()
-            recipeViewContent.setText(finalIngredientString)
+            else {
+                recipeViewContent.setText("")
+            }
+
         }
         else {
             recipeViewTitle.text = "Ingredients"
@@ -123,6 +153,5 @@ class RecipeViewActivity : AppCompatActivity() {
             val finalIngredientString = ingString.toString()
             recipeViewContent.setText(finalIngredientString)
         }
-
     }
 }

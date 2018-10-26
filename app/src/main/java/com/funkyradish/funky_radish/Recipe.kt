@@ -8,19 +8,21 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonParseException
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
+import io.realm.annotations.PrimaryKey
 import java.lang.reflect.Type
 
 @RealmClass
 open class Recipe : RealmObject() {
 
-    open var title: String? = null
+    @PrimaryKey
+    var _id: String = ""
 
-    open var _id: String? = null
+    open var title: String = ""
 
-    open var updatedAt: String? = null
+    open var updatedAt: String = ""
 
-    open var ingredients: RealmList<String>? = null
+    open var ingredients: RealmList<String> = RealmList<String>()
 
-    open var directions: RealmList<String>? = null
+    open var directions: RealmList<String> = RealmList<String>()
 
 }
