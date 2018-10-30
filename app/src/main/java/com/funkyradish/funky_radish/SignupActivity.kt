@@ -23,23 +23,27 @@ class SignupActivity : AppCompatActivity() {
         val email = findViewById<EditText>(R.id.editText2).text.toString()
         val password = findViewById<EditText>(R.id.editText3).text.toString()
 
-        // start loading indicator
-
-        // pass a callback to kill the loader and dismiss the view
-
         val progressBar: ProgressBar = this.progressBar
 
-        this@SignupActivity.runOnUiThread(java.lang.Runnable {
-            progressBar.visibility = View.VISIBLE
-        })
+        Thread(Runnable {
+            this@SignupActivity.runOnUiThread(java.lang.Runnable {
+                progressBar.visibility = View.VISIBLE
+            })
 
-//        val callback = {
-//            println("heynanan")
-//        }
+            // create user
+            try {
+                val queue = Volley.newRequestQueue(this)
+                createUser(this, queue, username, email, password)
+            } catch (e: InterruptedException) {
+                e.printStackTrace()
+            }
 
-        // setting up a Volley RequestQueue
-        val queue = Volley.newRequestQueue(this)
-        createUser(this, queue, username, email, password)
+            this@SignupActivity.runOnUiThread(java.lang.Runnable {
+//                Set up recipes. Is device already logged in? Are there recipes on the device?
+                val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
+                startActivity(intent)
+            })
+        }).start()
     }
 
     fun loginSegue(view: View) {

@@ -1,8 +1,16 @@
 package com.funkyradish.funky_radish
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v4.app.Fragment
+import android.support.v7.app.AlertDialog
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.Toast
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_view.*
 import io.realm.RealmList
@@ -18,19 +26,11 @@ class RecipeViewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_recipe_view)
 
-        println(recipe._id)
-
         loadRecipe()
         prepareToolbar()
 
         prepareRecipeView()
-
-        trashButton.setOnClickListener {
-            println(recipe._id)
-            realm.executeTransaction {
-                recipe.deleteFromRealm()
-            }
-        }
+        prepareTrashButton()
 
         recipeViewSwitch.setOnClickListener {
             directionView = !directionView
@@ -68,6 +68,7 @@ class RecipeViewActivity : AppCompatActivity() {
 
     private fun prepareToolbar() {
         setSupportActionBar(toolbar)
+        getSupportActionBar()!!.setTitle(recipe.title);
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         prepareSaveButton()
@@ -114,6 +115,8 @@ class RecipeViewActivity : AppCompatActivity() {
                     }
                 }
             }
+
+            this.hideKeyboard()
         }
     }
 
@@ -126,7 +129,6 @@ class RecipeViewActivity : AppCompatActivity() {
                 val dirString = StringBuilder()
 
                 for (i in 0 until dirs!!.size) {
-                    println(dirs!![i])
                     dirString.append(dirs!![i]).append("\n")
                 }
 
@@ -146,12 +148,47 @@ class RecipeViewActivity : AppCompatActivity() {
             val ingString = StringBuilder()
 
             for (i in 0 until ings!!.size) {
-                println(ings!![i])
                 ingString.append(ings!![i]).append("\n")
             }
 
             val finalIngredientString = ingString.toString()
             recipeViewContent.setText(finalIngredientString)
         }
+    }
+
+    private fun prepareTrashButton() {
+        trashButton.setOnClickListener {
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Are you sure you want to delete this recipe? You probably won't be able to get it back.")
+
+            builder.setPositiveButton("YES"){dialog, which ->
+                realm.executeTransaction {
+                    recipe.deleteFromRealm()
+                    val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
+                    startActivity(intent)
+                    Toast.makeText(applicationContext,"Recipe deleted.",Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            builder.setNegativeButton("No"){dialog,which ->
+                Toast.makeText(applicationContext,"Cancelled delete.",Toast.LENGTH_SHORT).show()
+            }
+
+            val dialog = builder.create()
+            dialog.show()
+        }
+    }
+
+    fun Fragment.hideKeyboard() {
+        activity!!.hideKeyboard(view!!)
+    }
+
+    fun Activity.hideKeyboard() {
+        hideKeyboard(if (currentFocus == null) View(this) else currentFocus)
+    }
+
+    fun Context.hideKeyboard(view: View) {
+        val inputMethodManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
     }
 }

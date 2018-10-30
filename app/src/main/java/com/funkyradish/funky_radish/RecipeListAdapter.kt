@@ -2,7 +2,6 @@ package com.funkyradish.funky_radish
 
 import android.content.Context
 import android.content.Intent
-import android.support.v7.view.menu.ActionMenuItemView
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
@@ -24,7 +23,7 @@ class RecipeListAdapter(val recipes: RealmResults<Recipe>, val context: Context)
     }
 
     override fun onBindViewHolder(p0: RecipeViewHolder, p1: Int) {
-        (p0 as RecipeViewHolder).bind(recipes.get(p1)!!)
+        (p0).bind(recipes.get(p1)!!)
     }
 
 }
@@ -33,24 +32,8 @@ class RecipeViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
 
     fun bind(recipe: Recipe) {
 
-        val ings = recipe.ingredients
-
-//        val strizzle =
-
-//        val ingString = StringBuilder()
-//
-//        println()
-//
-//        for (i in ings) {
-//            println(i)
-//
-//            ingString.append(i)
-//        }
-
-//        val finalIngredientString = ingString.toString()
-
         itemView.recipeViewTitle.text = recipe.title
-        itemView.ingredientContainer.text = ings.joinToString("\n")
+        itemView.ingredientContainer.text = recipe.ingredients.joinToString("\n")
 
         itemView.setOnClickListener {
             val intent = Intent(itemView.context, RecipeViewActivity::class.java)

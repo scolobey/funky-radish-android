@@ -10,7 +10,7 @@ import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_search.*
 import android.text.InputType
 import android.widget.EditText
-import io.realm.OrderedRealmCollectionChangeListener
+import com.android.volley.toolbox.Volley
 import io.realm.RealmResults
 import java.util.*
 
@@ -35,11 +35,11 @@ class RecipeSearchActivity : AppCompatActivity() {
 
         }
         else {
-            var token = checkForToken(this.getApplicationContext())
+            var token = getToken(this.getApplicationContext())
 
             if (token.length > 0) {
-//                val queue = Volley.newRequestQueue(this)
-//                loadRecipes(this, queue, token)
+                val queue = Volley.newRequestQueue(this)
+                loadRecipes(this, queue, token)
             }
             else {
                 showAuthorizationDialog()
@@ -73,7 +73,7 @@ class RecipeSearchActivity : AppCompatActivity() {
                     newRecipe.title = input.getText().toString()
 
                     val intent = Intent(this, RecipeViewActivity::class.java)
-                    intent.putExtra("rid", "")
+                    intent.putExtra("rid", newRecipe._id)
 
                     startActivity(intent)
                 }
