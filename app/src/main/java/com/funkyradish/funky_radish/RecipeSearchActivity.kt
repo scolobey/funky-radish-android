@@ -10,13 +10,16 @@ import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_search.*
 import android.text.InputType
 import android.widget.EditText
+import android.support.v7.widget.SearchView
 import com.android.volley.toolbox.Volley
+import io.realm.Case
 import io.realm.RealmResults
 import java.util.*
 
 class RecipeSearchActivity : AppCompatActivity() {
     private lateinit var realm: Realm
     private lateinit var recipes: RealmResults<Recipe>
+    private lateinit var filteredRecipes: RealmResults<Recipe>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,9 +29,12 @@ class RecipeSearchActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
 
         realm = Realm.getDefaultInstance()
+        // TODO: may be more performant to pass the search query here and let realm do the quick filtering work
+        // instead of maintaining a filtered list.
         recipes = realm.where(Recipe::class.java).findAll()
+        filteredRecipes = recipes
 
-        prepareRecipeListView(recipes)
+        prepareRecipeListView(filteredRecipes)
         prepareCreateRecipeButton()
 
         if(isOffline(this.applicationContext)) {
@@ -53,6 +59,7 @@ class RecipeSearchActivity : AppCompatActivity() {
     }
 
     fun prepareRecipeListView(recipes: RealmResults<Recipe>) {
+        println(recipes.toString())
         recipe_list_recycler_view.layoutManager = LinearLayoutManager(this)
         recipe_list_recycler_view.adapter = RecipeListAdapter(recipes, this)
     }
@@ -113,9 +120,32 @@ class RecipeSearchActivity : AppCompatActivity() {
     }
 
     // Add the options menu and actions
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater = menuInflater
         inflater.inflate(R.menu.menu, menu)
+        val searchField = menu.findItem(R.id.search_field)
+        if(searchField != null) {
+            val searchView = searchField.actionView as SearchView
+            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                    return true
+                }
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    if (newText!!.isNotEmpty()) {
+                        val searchQuery = newText.toLowerCase()
+                        println(searchQuery)
+                        filteredRecipes = realm.where(Recipe::class.java).contains("title", searchQuery, Case.INSENSITIVE).findAll()
+                        prepareRecipeListView(filteredRecipes)
+                    }
+                    else {
+                        filteredRecipes = recipes
+                        prepareRecipeListView(filteredRecipes)
+                    }
+                    return true
+                }
+            })
+        }
         return super.onCreateOptionsMenu(menu)
     }
 

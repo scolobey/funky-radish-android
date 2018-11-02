@@ -6,6 +6,7 @@
     <string name="settings_signup">Signup</string>
     <string name="settings_reload">Reload</string>
     <string name="save">Save</string>
+    <string name="search">Search</string>
     <string name="settings_offline_mode">Toggle Offline</string>
 
     <string name="title_activity_recipe_search">RecipeSearchActivity</string>
