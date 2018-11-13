@@ -2,9 +2,7 @@ package com.funkyradish.funky_radish
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.preference.PreferenceManager
-import android.support.v4.content.ContextCompat.startActivity
 import android.util.Log
 import android.widget.Toast
 import com.android.volley.RequestQueue
@@ -65,9 +63,11 @@ fun loadRecipes(activity: Activity, queue: RequestQueue, token: String) {
             },
             Response.ErrorListener { error ->
                 Log.d("API", "There was an error loading your recipes.")
+
+                val warning = "Authorization failed. Please login."
                 Toast.makeText(
                         activity.applicationContext,
-                        error.toString(),
+                        warning,
                         Toast.LENGTH_SHORT).show()
             }
     ) {
@@ -85,83 +85,94 @@ fun loadRecipes(activity: Activity, queue: RequestQueue, token: String) {
 fun synchRecipes(activity: Activity, queue: RequestQueue, recipes: JSONArray) {
 
     val realm = Realm.getDefaultInstance()
-    var localRecipes = realm.where(Recipe::class.java).findAll()
+
     var remoteRecipes = recipes
+    var localRecipes = realm.where(Recipe::class.java).findAll()
 
-    var updateRecipes = RealmList<Recipe>()
+    // This is the list of new recipes that need to be uploaded. Better name? : recipePost, uploadList
     var uploadRecipeList = RealmList<Recipe>()
-    var updateRemoteRecipeList = RealmList<Recipe>()
-
     uploadRecipeList.addAll(localRecipes)
 
-    // Compare local recipes to remote recipes.
+    // This is the list of recipes that have been changed locally and should be pushed to the api. Better name? : recipePut, updateList
+    var updateRemoteRecipeList = RealmList<Recipe>()
 
-    //Iterate the list of recipes you just downloaded
-    val finalIndex = remoteRecipes.length() - 1
-    for (i in 0..finalIndex) {
-        val remoteRecipe = remoteRecipes.getJSONObject(finalIndex - i)
-        println(remoteRecipe.toString())
+    Log.d("API", "Synchronizing recipes}")
 
-        //check if the recipe has a local copy
-        val localInstance = localRecipes.filter { localRecipe -> localRecipe._id == remoteRecipe["_id"] }
-        if (localInstance.size > 0) {
-            println("there's a recipe already. We should check if it's older than the remote version.")
+    //Reverse iterate downloaded recipes
+    val finalIndex = remoteRecipes.length()-1
 
-            //remove this recipe from the upload list because it already exists remotely.
-            uploadRecipeList.drop(uploadRecipeList.indexOf(localInstance.first()))
+    for (i in finalIndex downTo 0) {
+        Log.d("API", "Checking recipe at index. ${i}")
 
-            //If({ thisRecipe -> thisRecipe._id == localInstance.first()._id})
+        val remoteRecipe = remoteRecipes.getJSONObject(i)
+
+        //check for a local copy
+        val localRecipe = localRecipes.filter { localInstance -> localInstance._id == remoteRecipe["_id"] }
+
+        if (localRecipe.count() > 0) {
+
+            Log.d("API", "Local copy exists: ${localRecipe.first().title} ${localRecipe.first().updatedAt}")
 
             val formatter = DateTimeFormatter.ofPattern("EE MMM dd uuuu HH:mm:ss zZ")
-            val localDate = LocalDateTime.parse(localInstance.first().updatedAt.removeSuffix(" (UTC)"), formatter)
+            val localDate = LocalDateTime.parse(localRecipe.first().updatedAt.removeSuffix(" (UTC)"), formatter)
             val remoteDate = LocalDateTime.parse(remoteRecipe["updatedAt"].toString().removeSuffix(" (UTC)"), formatter)
 
-            // if the local copy is older, update the local. If it's fresher, update the remote copy.
-            // Otherwise, remove it from the remoteRecipesList so it doesn't get copied into Realm again.
-            if (remoteDate > localDate) {
-                println("we should update the local recipe.")
-                updateRecipes.add(localInstance.first())
-            }
-            else if (localDate > remoteDate) {
-                // Add it to the remote update list
-                updateRemoteRecipeList.add(localInstance.first())
+            Log.d("API", "Which recipe is older? Local: ${localDate.toString()} Remote: ${remoteDate.toString()}")
 
-                // Remove from the download list.
+            if (localDate > remoteDate) {
+                Log.d("API", "Local recipe is ahead")
+
+                updateRemoteRecipeList.add(localRecipe.first())
+
                 val output = JSONArray()
                 val len = remoteRecipes.length()-1
                 for (j in 0..len) {
                     if (j != i) {
-                        output.put(remoteRecipes.get(j));
+                        output.put(remoteRecipes.get(j))
                     }
                 }
                 remoteRecipes = output
+
+                Log.d("API", "uploadList: ${updateRemoteRecipeList.toString()}")
+                Log.d("API", "updateList: ${remoteRecipes.toString()}")
+            }
+            else if (remoteDate > localDate) {
+                //need to save the remote recipe to realm. Just don't remove it from the update list.
+                Log.d("API", "Remote recipe is ahead: ${remoteRecipe.toString()}")
             }
             else {
-                // Recipes have the same update time, so we can just remove it from the download list.
+                Log.d("API", "Recipes have the same date.")
+
                 val output = JSONArray()
                 val len = remoteRecipes.length()-1
                 for (j in 0..len) {
                     if (j != i) {
-                        output.put(remoteRecipes.get(j));
+                        output.put(remoteRecipes.get(j))
                     }
                 }
                 remoteRecipes = output
             }
+
+            // Remove the recipe from the uploadRecipeList list.
+            uploadRecipeList.remove(localRecipe.first())
         }
 
         else {
-            println("there's not a recipe already, so we should def download this... However, if the id is on the delete list . . . We should delete it from the remote copy.")
+            Log.d("API", "Local copy not found.")
         }
     }
 
-    // push new recipes to API
-    uploadRecipes(activity, queue, uploadRecipeList)
+    if(uploadRecipeList.count() > 0) {
+        uploadRecipes(activity, queue, uploadRecipeList)
+    }
 
-    // push updated recipes to API
-    updateRemoteRecipes(activity, queue, updateRemoteRecipeList)
+    if(updateRemoteRecipeList.count() > 0) {
+        updateRemoteRecipes(activity, queue, updateRemoteRecipeList)
+    }
 
-    // TODO: Recipes without a local copy (deleted recipes) have not been removed from the list of remote recipes.
     if(remoteRecipes.length() > 0) {
+        Log.d("API", "Adding ${remoteRecipes.toString()} recipes to local Realm.")
+
         val body = remoteRecipes.toString()
 
         realm.executeTransaction { realm ->
@@ -170,7 +181,6 @@ fun synchRecipes(activity: Activity, queue: RequestQueue, recipes: JSONArray) {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-//        TODO: Should reload the recipe search view
         }
     }
 }
@@ -212,11 +222,8 @@ fun saveRecipe(activity: Activity, queue: RequestQueue, title: String?, ingredie
 }
 
 fun uploadRecipes(activity: Activity, queue: RequestQueue, recipes: RealmList<Recipe>) {
+    // TODO: Update the updatedAt on the recipe after recipes are saved? Need to adjust the API for this.
 
-    //TODO: Do I need to also update the updatedAt on the recipe after recipes are saved?
-
-    println(recipes.toString())
-//    val token = getToken(activity.getApplicationContext())
     var recipeSet = JSONArray()
     val token = getToken(activity.getApplicationContext())
 
@@ -230,36 +237,33 @@ fun uploadRecipes(activity: Activity, queue: RequestQueue, recipes: RealmList<Re
         val ing = ingArray
 
         var dirArray = JSONArray()
-        for (i in 0..(it.ingredients.size-1)) {
-            println(it.ingredients[i])
-            dirArray.put(it.ingredients[i])
+        for (i in 0..(it.directions.size-1)) {
+            println(it.directions[i])
+            dirArray.put(it.directions[i])
         }
         val dir = dirArray
 
+        val _id = it._id
         val title = it.title
 
         val jsonRecipe = JSONObject().apply({
             put("ingredients", ing)
             put("directions", dir)
             put("title", title)
+            put("_id", _id)
         })
 
         recipeSet.put(jsonRecipe)
     }
 
-    println("upload")
-    println(recipeSet.toString())
+    Log.d("API", "Uploading: ${recipeSet.toString()}")
 
     // Build recipe post request
     val recipePostRequest = object : JsonArrayRequest(Method.POST, ENDPOINT3, recipeSet,
             Response.Listener<JSONArray> { response ->
-                val body = response.toString()
-                println(body)
-
                 Log.d("API", "Recipes uploaded.")
             },
             Response.ErrorListener { error ->
-                Log.d("API", "There was an error creating a user.")
                 Toast.makeText(
                         activity.applicationContext,
                         error.toString(),
@@ -276,12 +280,12 @@ fun uploadRecipes(activity: Activity, queue: RequestQueue, recipes: RealmList<Re
 
     // Add the request to the Volley queue
     queue.add(recipePostRequest)
-
 }
 
 fun updateRemoteRecipes(activity: Activity, queue: RequestQueue, recipes: RealmList<Recipe>) {
-   println(recipes.toString())
-//    val token = getToken(activity.getApplicationContext())
+
+    Log.d("API", "Updating recipes: ${recipes.toString()}")
+
     var recipeSet = JSONArray()
     val token = getToken(activity.getApplicationContext())
 
@@ -289,15 +293,13 @@ fun updateRemoteRecipes(activity: Activity, queue: RequestQueue, recipes: RealmL
 
         var ingArray = JSONArray()
         for (i in 0..(it.ingredients.size-1)) {
-            println(it.ingredients[i])
             ingArray.put(it.ingredients[i])
         }
         val ing = ingArray
 
         var dirArray = JSONArray()
-        for (i in 0..(it.ingredients.size-1)) {
-            println(it.ingredients[i])
-            dirArray.put(it.ingredients[i])
+        for (i in 0..(it.directions.size-1)) {
+            dirArray.put(it.directions[i])
         }
         val dir = dirArray
 
@@ -316,24 +318,19 @@ fun updateRemoteRecipes(activity: Activity, queue: RequestQueue, recipes: RealmL
         recipeSet.put(jsonRecipe)
     }
 
-    println(recipeSet.toString())
-    println("update")
+    Log.d("API", "Update json: ${recipeSet.toString()}")
 
     // Build user request
-    val recipePostRequest = object : JsonArrayRequest(Method.POST, ENDPOINT4, recipeSet,
+    val recipePostRequest = object : JsonArrayRequest(Method.PUT, ENDPOINT4, recipeSet,
             Response.Listener<JSONArray> { response ->
-                val body = response.toString()
-                println(body)
-
                 Log.d("API", "Recipes saved.")
             },
             Response.ErrorListener { error ->
-                Log.d("API", "There was an error creating a user.")
+                Log.d("API", "Error updating remote recipes.")
                 Toast.makeText(
                         activity.applicationContext,
                         error.toString(),
                         Toast.LENGTH_SHORT).show()
-
             }
     ) {
         override fun getHeaders(): Map<String, String> {
@@ -344,9 +341,7 @@ fun updateRemoteRecipes(activity: Activity, queue: RequestQueue, recipes: RealmL
         }
     }
 
-    // Add the request to the Volley queue
     queue.add(recipePostRequest)
-
 }
 
 fun createUser(activity: Activity, queue: RequestQueue, username: String, email: String, password: String) {
@@ -368,7 +363,10 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
                 val userResponse = gson.fromJson(body, UserResponse::class.java)
                 Log.d("API", userResponse.message)
 
-                getToken(activity, queue, email, password)
+                downloadToken(activity, queue, email, password, { println("login called.")})
+
+                // if there are recipes in realm, upload them.
+                synchRecipes(activity, queue, JSONArray())
             },
             Response.ErrorListener { error ->
                 Log.d("API", "There was an error creating a user.")
@@ -390,7 +388,11 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
     queue.add(userRequest)
 }
 
-fun getToken(activity: Activity, queue: RequestQueue, email: String, password: String) {
+fun loginUser(activity: Activity, queue: RequestQueue, email: String, password: String) {
+    downloadToken(activity, queue, email, password, { println("login called.")})
+}
+
+fun downloadToken(activity: Activity, queue: RequestQueue, email: String, password: String, callback: () -> Unit) {
     Log.d("API", "Requesting authorization token.")
 
     // Prepare a space for your token in preferences.
@@ -408,15 +410,19 @@ fun getToken(activity: Activity, queue: RequestQueue, email: String, password: S
                 editor.putString(FR_TOKEN, token)
                 editor.apply()
 
-                Log.d("API", "Token stored.")
+                Log.d("API", "Token stored: ${token}")
 
-                // Then we should load recipes, followed by the main recipe view.
+                synchRecipes(activity, queue, JSONArray())
+
+                callback()
             },
             Response.ErrorListener { error ->
                 Toast.makeText(
                         activity.applicationContext,
                         error.toString(),
                         Toast.LENGTH_SHORT).show()
+
+                callback()
             }
     ) {
         override fun getBodyContentType(): String {

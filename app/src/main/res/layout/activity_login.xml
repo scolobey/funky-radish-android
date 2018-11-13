@@ -10,7 +10,7 @@
         android:id="@+id/loginEmailField"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="45dp"
+        android:layout_marginTop="55dp"
         android:ems="10"
         android:hint="Email"
         android:inputType="textEmailAddress"
@@ -62,4 +62,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView4" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:visibility="gone"/>
+
 </android.support.constraint.ConstraintLayout>

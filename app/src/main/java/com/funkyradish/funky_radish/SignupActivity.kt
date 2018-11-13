@@ -3,7 +3,6 @@ package com.funkyradish.funky_radish
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.ProgressBar
@@ -22,6 +21,10 @@ class SignupActivity : AppCompatActivity() {
         val username = findViewById<EditText>(R.id.editText).text.toString()
         val email = findViewById<EditText>(R.id.editText2).text.toString()
         val password = findViewById<EditText>(R.id.editText3).text.toString()
+
+        if(isOffline(this.applicationContext)) {
+            toggleOfflineMode(this.applicationContext)
+        }
 
         val progressBar: ProgressBar = this.progressBar
 

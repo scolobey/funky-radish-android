@@ -4,52 +4,100 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.content.Intent
+import android.support.v4.content.ContextCompat
 import android.support.v7.widget.LinearLayoutManager
 import android.view.*
-import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_search.*
 import android.text.InputType
 import android.widget.EditText
 import android.support.v7.widget.SearchView
+import android.util.Log
+import android.widget.ProgressBar
+import android.widget.Toast
 import com.android.volley.toolbox.Volley
-import io.realm.Case
-import io.realm.RealmResults
+import io.realm.*
 import java.util.*
+
 
 class RecipeSearchActivity : AppCompatActivity() {
     private lateinit var realm: Realm
     private lateinit var recipes: RealmResults<Recipe>
     private lateinit var filteredRecipes: RealmResults<Recipe>
 
+    override fun onResume() {
+        super.onResume()
+        Log.d("API", "Resume stuff.")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Assemble the view
+        realm = Realm.getDefaultInstance()
+
         setContentView(R.layout.activity_recipe_search)
         setSupportActionBar(findViewById(R.id.toolbar))
+        prepareCreateRecipeButton()
 
-        realm = Realm.getDefaultInstance()
-        // TODO: may be more performant to pass the search query here and let realm do the quick filtering work
-        // instead of maintaining a filtered list.
         recipes = realm.where(Recipe::class.java).findAll()
         filteredRecipes = recipes
 
         prepareRecipeListView(filteredRecipes)
-        prepareCreateRecipeButton()
 
-        if(isOffline(this.applicationContext)) {
 
-        }
-        else {
+        // TODO: check if this can be removed.
+        var listener = RealmChangeListener<RealmResults<Recipe>>({
+            Log.d("API", "Changing: ${it.toString()}.")
+            prepareRecipeListView(filteredRecipes)
+        })
+
+        recipes.addChangeListener(listener)
+
+        Log.d("API", "Beginning recipe loader.")
+
+        // If offline mode is toggled on, don't try to download recipes.
+        if(!isOffline(this.applicationContext)) {
+            Log.d("API", "Application is online.")
             var token = getToken(this.getApplicationContext())
 
+            Log.d("API", "Looking for a token.")
+
             if (token.length > 0) {
-                val queue = Volley.newRequestQueue(this)
-                loadRecipes(this, queue, token)
+
+                Log.d("API", "Found a token.")
+
+                val progressBar: ProgressBar = this.progressBar
+
+                Thread(Runnable {
+                    this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
+                        Log.d("API", "Starting loader.")
+                        progressBar.visibility = View.VISIBLE
+                    })
+
+                    // create user
+                    try {
+                        val queue = Volley.newRequestQueue(this)
+                        loadRecipes(this, queue, token)
+                    } catch (e: InterruptedException) {
+                        e.printStackTrace()
+                        val intent = Intent(this, LoginActivity::class.java)
+                        startActivity(intent)
+                    }
+
+                    this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
+                        Log.d("API", "Stopping loader.")
+                        // Set up recipes. Is device already logged in? Are there recipes on the device?
+                        prepareRecipeListView(filteredRecipes)
+                        progressBar.visibility = View.INVISIBLE
+                    })
+                }).start()
             }
             else {
+                Log.d("API", "Did not find a token.")
                 showAuthorizationDialog()
             }
+        }
+        else {
+            Log.d("API", "Application is offline.")
         }
     }
 
@@ -58,14 +106,9 @@ class RecipeSearchActivity : AppCompatActivity() {
         realm.close()
     }
 
-    fun prepareRecipeListView(recipes: RealmResults<Recipe>) {
-        println(recipes.toString())
-        recipe_list_recycler_view.layoutManager = LinearLayoutManager(this)
-        recipe_list_recycler_view.adapter = RecipeListAdapter(recipes, this)
-    }
-
     fun prepareCreateRecipeButton() {
         createRecipeButton.setOnClickListener {
+
             val builder = AlertDialog.Builder(this)
             builder.setTitle("What would you like to call this recipe?")
             val input = EditText(this)
@@ -73,18 +116,15 @@ class RecipeSearchActivity : AppCompatActivity() {
             builder.setView(input)
 
             builder.setPositiveButton("OK") { dialog, which ->
-
+                // Create a recipe with a given title. Pass the recipe's _id to the editor.
                 realm.executeTransaction { realm ->
-                    // Add a person
                     val newRecipe = realm.createObject(Recipe::class.java, UUID.randomUUID().toString())
                     newRecipe.title = input.getText().toString()
 
                     val intent = Intent(this, RecipeViewActivity::class.java)
                     intent.putExtra("rid", newRecipe._id)
-
                     startActivity(intent)
                 }
-
             }
             builder.setNegativeButton("Cancel") {
                 dialog, which -> dialog.cancel()
@@ -96,8 +136,9 @@ class RecipeSearchActivity : AppCompatActivity() {
 
     fun showAuthorizationDialog() {
         val builder = AlertDialog.Builder(this)
-        builder.setTitle("Hi. How would you like to get started?")
+        builder.setTitle("How would you like to get started?")
         val array = arrayOf("Login", "Signup", "Continue offline")
+
         builder.setItems(array) {_, which ->
             val selected = array[which]
             when (selected) {
@@ -119,11 +160,36 @@ class RecipeSearchActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    // Add the options menu and actions
+
+    fun prepareRecipeListView(recipes: RealmResults<Recipe>) {
+        println(recipes.toString())
+        recipe_list_recycler_view.layoutManager = LinearLayoutManager(this)
+        recipe_list_recycler_view.adapter = RecipeListAdapter(recipes, this)
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater = menuInflater
+
+        var token = getToken(this.getApplicationContext())
+
+        if (token.length > 0) {
+            menu.add(1, 1, 1, token)
+            menu.add(1, 2, 1, "Logout")
+        } else {
+            menu.add(2, 3, 2, "Login")
+            menu.add(2, 4, 2, "Signup")
+        }
+
+        if (isOffline(this.applicationContext)) {
+            menu.add(3, 5, 3, "Toggle Online")
+        }
+        else {
+            menu.add(3, 5, 3, "Toggle Offline")
+        }
+
         inflater.inflate(R.menu.menu, menu)
         val searchField = menu.findItem(R.id.search_field)
+
         if(searchField != null) {
             val searchView = searchField.actionView as SearchView
             searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -151,34 +217,64 @@ class RecipeSearchActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.action_login -> {
+            // Login
+            3 -> {
+                toolbar.menu.removeGroup(2)
+
                 val intent = Intent(this, LoginActivity::class.java).apply {
                 }
                 startActivity(intent)
                 return true
             }
-            R.id.action_logout -> {
-                setToken(this.getApplicationContext(), "")
+            // Logout
+            2 -> {
+                val builder = AlertDialog.Builder(this)
+                builder.setTitle("This may delete recipes that have not been saved to your online account. Continue?")
 
-                var recipeModel = RecipeModel()
-                val realm = Realm.getDefaultInstance()
-                recipeModel.removeRecipes(realm)
+                builder.setPositiveButton("YES"){dialog, which ->
+                    setToken(this.getApplicationContext(), "")
+
+                    var recipeModel = RecipeModel()
+                    val realm = Realm.getDefaultInstance()
+                    recipeModel.removeRecipes(realm)
+
+                    toolbar.menu.removeGroup(1)
+                    toolbar.menu.add(2, 3, 2, "Login")
+                    toolbar.menu.add(2, 4, 2, "Signup")
+
+                    prepareRecipeListView(filteredRecipes)
+                }
+
+                builder.setNegativeButton("No"){dialog,which ->
+                    Toast.makeText(applicationContext,"Logout cancelled.", Toast.LENGTH_SHORT).show()
+                }
+
+                val dialog = builder.create()
+                dialog.show()
 
                 return true
             }
-            R.id.action_signup -> {
+            // Signup
+            4 -> {
+                toolbar.menu.removeGroup(2)
+
                 val intent = Intent(this, SignupActivity::class.java).apply {
                 }
                 startActivity(intent)
 
                 return true
             }
-            R.id.toggle_offline_mode -> {
+            5 -> {
+                toolbar.menu.removeGroup(3)
+
                 toggleOfflineMode(this.getApplicationContext())
 
-                return true
-            }
-            R.id.action_reload -> {
+                if (isOffline(this.applicationContext)) {
+                    toolbar.menu.add(3, 5, 3, "Toggle Online")
+                }
+                else {
+                    toolbar.menu.add(3, 5, 3, "Toggle Offline")
+                }
                 return true
             }
         }

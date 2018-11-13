@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -14,6 +15,10 @@ import android.widget.Toast
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_view.*
 import io.realm.RealmList
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 class RecipeViewActivity : AppCompatActivity() {
 
@@ -79,6 +84,11 @@ class RecipeViewActivity : AppCompatActivity() {
 
         saveButton.setOnClickListener {
 
+            val currentTime = Calendar.getInstance()
+            val formattedDate = SimpleDateFormat("EE MMM dd yyyy HH:mm:ss zZ").format(currentTime.time)
+
+            Log.d("API", "saving ${formattedDate}")
+
             if(directionView) {
                 // convert text to realmList and set recipe.directions
                 var directionArray = recipeViewContent.text.split("\n")
@@ -91,7 +101,12 @@ class RecipeViewActivity : AppCompatActivity() {
                 realm.executeTransaction { _ ->
                     try {
                         recipe.directions = recipeDirectionRealmList
+                        recipe.updatedAt = formattedDate + " (UTC)"
+// TODO                        saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
+
+                        Log.d("API", "such success. ${recipeDirectionRealmList}")
                     } catch (e: Exception) {
+                        Log.d("API", "such failure.")
                         e.printStackTrace()
                     }
                 }
@@ -103,14 +118,17 @@ class RecipeViewActivity : AppCompatActivity() {
 
                 for (i in ingredientArray) {
                     recipeIngredientRealmList.add(i)
-                    //                        saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
                 }
 
                 realm.executeTransaction { realm ->
                     try {
                         recipe.ingredients = recipeIngredientRealmList
-//                        saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
+                        recipe.updatedAt = formattedDate + " (UTC)"
+
+                        Log.d("API", "such success. ${recipeIngredientRealmList}")
+// TODO                       saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
                     } catch (e: Exception) {
+                        Log.d("API", "such failure.")
                         e.printStackTrace()
                     }
                 }
@@ -159,7 +177,7 @@ class RecipeViewActivity : AppCompatActivity() {
     private fun prepareTrashButton() {
         trashButton.setOnClickListener {
             val builder = AlertDialog.Builder(this)
-            builder.setTitle("Are you sure you want to delete this recipe? You probably won't be able to get it back.")
+            builder.setTitle("Are you sure you want to permanently delete this recipe?")
 
             builder.setPositiveButton("YES"){dialog, which ->
                 realm.executeTransaction {
