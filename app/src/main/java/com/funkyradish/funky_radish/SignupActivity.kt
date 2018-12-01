@@ -3,11 +3,12 @@ package com.funkyradish.funky_radish
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.ProgressBar
 import com.android.volley.toolbox.Volley
-import kotlinx.android.synthetic.main.activity_signup.*
+import kotlinx.android.synthetic.main.activity_recipe_search.*
 
 class SignupActivity : AppCompatActivity() {
 
@@ -26,7 +27,7 @@ class SignupActivity : AppCompatActivity() {
             toggleOfflineMode(this.applicationContext)
         }
 
-        val progressBar: ProgressBar = this.progressBar
+        val progressBar: ProgressBar = this.recipeListSpinner
 
         Thread(Runnable {
             this@SignupActivity.runOnUiThread(java.lang.Runnable {
@@ -36,16 +37,31 @@ class SignupActivity : AppCompatActivity() {
             // create user
             try {
                 val queue = Volley.newRequestQueue(this)
-                createUser(this, queue, username, email, password)
+                createUser(this, queue, username, email, password, { success: Boolean ->
+                    Log.d("API", "Executing signup callback")
+
+                    if (success) {
+                        toolbar.menu.removeGroup(2)
+
+                        this@SignupActivity.runOnUiThread(java.lang.Runnable {
+                            Log.d("API", "Redirecting to main view.")
+
+                            // Set up recipes. Is device already logged in? Are there recipes on the device?
+                            val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
+                            startActivity(intent)
+                        })
+                    }
+                    else {
+                        this@SignupActivity.runOnUiThread(java.lang.Runnable {
+                            progressBar.visibility = View.INVISIBLE
+                        })
+                    }
+
+                })
             } catch (e: InterruptedException) {
+                Log.d("API", "Some kinda error.")
                 e.printStackTrace()
             }
-
-            this@SignupActivity.runOnUiThread(java.lang.Runnable {
-//                Set up recipes. Is device already logged in? Are there recipes on the device?
-                val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
-                startActivity(intent)
-            })
         }).start()
     }
 

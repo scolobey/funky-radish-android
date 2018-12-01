@@ -8,7 +8,7 @@ import android.view.View
 import android.widget.EditText
 import android.widget.ProgressBar
 import com.android.volley.toolbox.Volley
-import kotlinx.android.synthetic.main.activity_login.*
+import kotlinx.android.synthetic.main.activity_recipe_search.*
 
 class LoginActivity : AppCompatActivity() {
 
@@ -25,13 +25,13 @@ class LoginActivity : AppCompatActivity() {
             toggleOfflineMode(this.applicationContext)
         }
 
-        val progressBar: ProgressBar = this.progressBar
+        val progressSpinner: ProgressBar = this.recipeListSpinner
 
         // start loading indicator
         Thread(Runnable {
             this@LoginActivity.runOnUiThread(java.lang.Runnable {
                 Log.d("API", "Starting progress bar.")
-                progressBar.visibility = View.VISIBLE
+                progressSpinner.visibility = View.VISIBLE
             })
 
             // create user
@@ -39,7 +39,9 @@ class LoginActivity : AppCompatActivity() {
                 Log.d("API", "Calling for a token.")
                 val queue = Volley.newRequestQueue(this)
                 downloadToken(this, queue, email, password, {
-                    Log.d("API", "Executing callback")
+                    Log.d("API", "Executing login callback")
+
+                    toolbar.menu.removeGroup(2)
 
                     this@LoginActivity.runOnUiThread(java.lang.Runnable {
                         Log.d("API", "Redirecting to main view.")

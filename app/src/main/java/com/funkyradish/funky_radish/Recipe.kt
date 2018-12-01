@@ -15,7 +15,9 @@ import java.lang.reflect.Type
 open class Recipe : RealmObject() {
 
     @PrimaryKey
-    var _id: String = ""
+    open var realmID: String = ""
+
+    open var _id: String = ""
 
     open var title: String = ""
 

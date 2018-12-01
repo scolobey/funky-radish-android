@@ -24,11 +24,6 @@ class RecipeSearchActivity : AppCompatActivity() {
     private lateinit var recipes: RealmResults<Recipe>
     private lateinit var filteredRecipes: RealmResults<Recipe>
 
-    override fun onResume() {
-        super.onResume()
-        Log.d("API", "Resume stuff.")
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -43,10 +38,8 @@ class RecipeSearchActivity : AppCompatActivity() {
 
         prepareRecipeListView(filteredRecipes)
 
-
         // TODO: check if this can be removed.
         var listener = RealmChangeListener<RealmResults<Recipe>>({
-            Log.d("API", "Changing: ${it.toString()}.")
             prepareRecipeListView(filteredRecipes)
         })
 
@@ -54,9 +47,13 @@ class RecipeSearchActivity : AppCompatActivity() {
 
         Log.d("API", "Beginning recipe loader.")
 
+        if (isConnectedToInternet(this.applicationContext)) {
+            toggleOfflineMode(this.applicationContext)
+        }
+
         // If offline mode is toggled on, don't try to download recipes.
         if(!isOffline(this.applicationContext)) {
-            Log.d("API", "Application is online.")
+            Log.d("API", "Application is in online mode.")
             var token = getToken(this.getApplicationContext())
 
             Log.d("API", "Looking for a token.")
@@ -65,7 +62,7 @@ class RecipeSearchActivity : AppCompatActivity() {
 
                 Log.d("API", "Found a token.")
 
-                val progressBar: ProgressBar = this.progressBar
+                val progressBar: ProgressBar = this.recipeListSpinner
 
                 Thread(Runnable {
                     this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
@@ -108,7 +105,6 @@ class RecipeSearchActivity : AppCompatActivity() {
 
     fun prepareCreateRecipeButton() {
         createRecipeButton.setOnClickListener {
-
             val builder = AlertDialog.Builder(this)
             builder.setTitle("What would you like to call this recipe?")
             val input = EditText(this)
@@ -121,8 +117,9 @@ class RecipeSearchActivity : AppCompatActivity() {
                     val newRecipe = realm.createObject(Recipe::class.java, UUID.randomUUID().toString())
                     newRecipe.title = input.getText().toString()
 
+                    //TODO: why is this inside the realm transaction?
                     val intent = Intent(this, RecipeViewActivity::class.java)
-                    intent.putExtra("rid", newRecipe._id)
+                    intent.putExtra("rid", newRecipe.realmID)
                     startActivity(intent)
                 }
             }
@@ -162,7 +159,6 @@ class RecipeSearchActivity : AppCompatActivity() {
 
 
     fun prepareRecipeListView(recipes: RealmResults<Recipe>) {
-        println(recipes.toString())
         recipe_list_recycler_view.layoutManager = LinearLayoutManager(this)
         recipe_list_recycler_view.adapter = RecipeListAdapter(recipes, this)
     }
@@ -188,6 +184,7 @@ class RecipeSearchActivity : AppCompatActivity() {
         }
 
         inflater.inflate(R.menu.menu, menu)
+
         val searchField = menu.findItem(R.id.search_field)
 
         if(searchField != null) {
@@ -219,8 +216,6 @@ class RecipeSearchActivity : AppCompatActivity() {
         when (item.itemId) {
             // Login
             3 -> {
-                toolbar.menu.removeGroup(2)
-
                 val intent = Intent(this, LoginActivity::class.java).apply {
                 }
                 startActivity(intent)
@@ -256,8 +251,6 @@ class RecipeSearchActivity : AppCompatActivity() {
             }
             // Signup
             4 -> {
-                toolbar.menu.removeGroup(2)
-
                 val intent = Intent(this, SignupActivity::class.java).apply {
                 }
                 startActivity(intent)

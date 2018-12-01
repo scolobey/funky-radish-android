@@ -66,9 +66,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="35dp"
         app:layout_constraintEnd_toEndOf="@+id/recipeViewContent"
         app:layout_constraintTop_toTopOf="@+id/recipeViewSwitch"
         app:srcCompat="@android:drawable/ic_menu_delete" />
+
+    <Button
+        android:id="@+id/editTitleButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="35dp"
+        android:text="Change Title"
+        app:layout_constraintStart_toStartOf="@+id/recipeViewContent"
+        app:layout_constraintTop_toTopOf="@+id/recipeViewSwitch" />
+
 </android.support.constraint.ConstraintLayout>

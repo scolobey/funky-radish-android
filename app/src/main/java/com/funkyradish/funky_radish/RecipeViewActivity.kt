@@ -7,10 +7,12 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
+import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.EditText
 import android.widget.Toast
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_view.*
@@ -36,6 +38,7 @@ class RecipeViewActivity : AppCompatActivity() {
 
         prepareRecipeView()
         prepareTrashButton()
+        prepareTitleEditButton()
 
         recipeViewSwitch.setOnClickListener {
             directionView = !directionView
@@ -48,7 +51,9 @@ class RecipeViewActivity : AppCompatActivity() {
         val recipeID: String = intent.getStringExtra("rid")
 //        val recipeTitle: String = intent.getStringExtra("recipe_title")
 
-        recipe = realm.where(Recipe::class.java).equalTo("_id", recipeID).findFirst()!!
+        recipe = realm.where(Recipe::class.java).equalTo("realmID", recipeID).findFirst()!!
+
+        Log.d("API", "displaying: ${recipe.toString()} ")
 
 //        if(recipeID.isNotEmpty()) {
 //
@@ -87,7 +92,7 @@ class RecipeViewActivity : AppCompatActivity() {
             val currentTime = Calendar.getInstance()
             val formattedDate = SimpleDateFormat("EE MMM dd yyyy HH:mm:ss zZ").format(currentTime.time)
 
-            Log.d("API", "saving ${formattedDate}")
+            Log.d("API", "saving ${formattedDate}, _id: ${recipe.toString()} ")
 
             if(directionView) {
                 // convert text to realmList and set recipe.directions
@@ -104,7 +109,7 @@ class RecipeViewActivity : AppCompatActivity() {
                         recipe.updatedAt = formattedDate + " (UTC)"
 // TODO                        saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
 
-                        Log.d("API", "such success. ${recipeDirectionRealmList}")
+                        Log.d("API", "such success. ${recipeDirectionRealmList}, _id: ${recipe._id} ")
                     } catch (e: Exception) {
                         Log.d("API", "such failure.")
                         e.printStackTrace()
@@ -194,6 +199,31 @@ class RecipeViewActivity : AppCompatActivity() {
 
             val dialog = builder.create()
             dialog.show()
+        }
+    }
+
+    private fun prepareTitleEditButton() {
+        editTitleButton.setOnClickListener {
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("What would you like to call this recipe?")
+            val input = EditText(this)
+            input.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_NORMAL
+            builder.setView(input)
+
+            builder.setPositiveButton("OK") { dialog, which ->
+                realm.executeTransaction { realm ->
+                    // change the recipe's title
+                    recipe.title = input.getText().toString()
+                }
+
+                finish()
+                startActivity(getIntent())
+            }
+            builder.setNegativeButton("Cancel") {
+                dialog, which -> dialog.cancel()
+            }
+
+            builder.show()
         }
     }
 

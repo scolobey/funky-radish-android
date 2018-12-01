@@ -37,7 +37,7 @@ class RecipeViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
 
         itemView.setOnClickListener {
             val intent = Intent(itemView.context, RecipeViewActivity::class.java)
-            intent.putExtra("rid", recipe._id)
+            intent.putExtra("rid", recipe.realmID)
             itemView.context.startActivity(intent)
         }
     }

@@ -2,19 +2,25 @@ package com.funkyradish.funky_radish
 
 import android.app.Activity
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
+import android.os.Build
 import android.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
-import com.android.volley.RequestQueue
-import com.android.volley.Response
-import com.android.volley.toolbox.JsonArrayRequest
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.StringRequest
+import com.android.volley.*
+import com.android.volley.toolbox.*
+import com.google.gson.Gson
 import org.json.JSONObject
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonSyntaxException
 import io.realm.Realm
 import io.realm.RealmList
 import org.json.JSONArray
+import java.io.UnsupportedEncodingException
+import java.lang.reflect.Type
+import java.nio.charset.Charset
+import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -96,35 +102,82 @@ fun synchRecipes(activity: Activity, queue: RequestQueue, recipes: JSONArray) {
     // This is the list of recipes that have been changed locally and should be pushed to the api. Better name? : recipePut, updateList
     var updateRemoteRecipeList = RealmList<Recipe>()
 
-    Log.d("API", "Synchronizing recipes}")
+    Log.d("API", "Synchronizing recipes.")
 
     //Reverse iterate downloaded recipes
     val finalIndex = remoteRecipes.length()-1
 
     for (i in finalIndex downTo 0) {
-        Log.d("API", "Checking recipe at index. ${i}")
+        Log.d("API", "Inspecting recipe at index: ${i}")
 
         val remoteRecipe = remoteRecipes.getJSONObject(i)
 
         //check for a local copy
-        val localRecipe = localRecipes.filter { localInstance -> localInstance._id == remoteRecipe["_id"] }
+        val localRecipe = localRecipes.filter { localInstance -> localInstance.realmID == remoteRecipe["realmID"] }
 
         if (localRecipe.count() > 0) {
 
             Log.d("API", "Local copy exists: ${localRecipe.first().title} ${localRecipe.first().updatedAt}")
 
-            val formatter = DateTimeFormatter.ofPattern("EE MMM dd uuuu HH:mm:ss zZ")
-            val localDate = LocalDateTime.parse(localRecipe.first().updatedAt.removeSuffix(" (UTC)"), formatter)
-            val remoteDate = LocalDateTime.parse(remoteRecipe["updatedAt"].toString().removeSuffix(" (UTC)"), formatter)
+            var synchMode = 0
 
-            Log.d("API", "Which recipe is older? Local: ${localDate.toString()} Remote: ${remoteDate.toString()}")
+            // TODO: Are both really necessary?
 
-            if (localDate > remoteDate) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val formatter = DateTimeFormatter.ofPattern("EE MMM dd uuuu HH:mm:ss zZ")
+                val localDate = LocalDateTime.parse(localRecipe.first().updatedAt.removeSuffix(" (UTC)"), formatter)
+                val remoteDate = LocalDateTime.parse(remoteRecipe["updatedAt"].toString().removeSuffix(" (UTC)"), formatter)
+
+                Log.d("API", "Android new: Which recipe is older? Local: ${localDate.toString()} Remote: ${remoteDate.toString()} other: ${localDate.compareTo(remoteDate)}")
+
+                if (localDate.isAfter(remoteDate)) {
+                    synchMode = 1
+                    Log.d("API", "remote recipe is older")
+                }
+                else if (remoteDate.isAfter(localDate)) {
+                    synchMode = 2
+                    Log.d("API", "local recipe is older")
+                }
+            }
+            else {
+                val formatter = SimpleDateFormat("EEE MMM d yyy HH:mm:ss")
+                val localDate = formatter.parse(localRecipe.first().updatedAt)
+                val remoteDate = formatter.parse(remoteRecipe["updatedAt"].toString())
+
+                Log.d("API", "Android new: Which recipe is older? Local: ${localDate.toString()} Remote: ${remoteDate.toString()} other: ${localDate.compareTo(remoteDate)}")
+
+                if (localDate > remoteDate) {
+                    synchMode = 1
+                    Log.d("API", "remote recipe is older")
+                }
+                else if (remoteDate > localDate) {
+                    synchMode = 2
+                    Log.d("API", "local recipe is older")
+                }
+            }
+
+            // mode #1 - The recipe on the device has been edited more recently than the online version.
+            if (synchMode == 1) {
                 Log.d("API", "Local recipe is ahead")
+
+                // Special case where a recipe has been saved, but the callback did not persist recipe._id to local successfully
+                if (localRecipe.first()._id.count() == 0) {
+                    Log.d("API", "WTF - local doesn't have an id ${remoteRecipe["_id"]}")
+
+                    realm.executeTransaction { realm ->
+                        try {
+                            localRecipe.first()._id = remoteRecipe["_id"].toString()
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
 
                 updateRemoteRecipeList.add(localRecipe.first())
 
+                //remove from remoteRecipes so that the local recipe is not updated.
                 val output = JSONArray()
+
                 val len = remoteRecipes.length()-1
                 for (j in 0..len) {
                     if (j != i) {
@@ -133,13 +186,16 @@ fun synchRecipes(activity: Activity, queue: RequestQueue, recipes: JSONArray) {
                 }
                 remoteRecipes = output
 
-                Log.d("API", "uploadList: ${updateRemoteRecipeList.toString()}")
-                Log.d("API", "updateList: ${remoteRecipes.toString()}")
+                Log.d("API", "updateList: ${updateRemoteRecipeList.toString()}")
             }
-            else if (remoteDate > localDate) {
+
+            // mode #2 - The online version has been edited more recently than the version on the device.
+            else if (synchMode == 2) {
                 //need to save the remote recipe to realm. Just don't remove it from the update list.
                 Log.d("API", "Remote recipe is ahead: ${remoteRecipe.toString()}")
             }
+
+            // mode #0 (default) - Online version and device version have the same updatedAt time.
             else {
                 Log.d("API", "Recipes have the same date.")
 
@@ -200,9 +256,7 @@ fun saveRecipe(activity: Activity, queue: RequestQueue, title: String?, ingredie
     val recipePost = object : JsonObjectRequest(Method.POST, ENDPOINT3, json,
             Response.Listener { response ->
                 val body = response.toString()
-                println(body)
-
-                Log.d("API", "Recipe saved.")
+                Log.d("API", "Recipe saved: ${body}")
             },
             Response.ErrorListener { error ->
                 Toast.makeText(
@@ -243,14 +297,16 @@ fun uploadRecipes(activity: Activity, queue: RequestQueue, recipes: RealmList<Re
         }
         val dir = dirArray
 
-        val _id = it._id
+        val realmID = it.realmID
         val title = it.title
+        val updatedAt = it.updatedAt
 
         val jsonRecipe = JSONObject().apply({
             put("ingredients", ing)
             put("directions", dir)
             put("title", title)
-            put("_id", _id)
+            put("realmID", realmID)
+            put("updatedAt", updatedAt)
         })
 
         recipeSet.put(jsonRecipe)
@@ -261,7 +317,20 @@ fun uploadRecipes(activity: Activity, queue: RequestQueue, recipes: RealmList<Re
     // Build recipe post request
     val recipePostRequest = object : JsonArrayRequest(Method.POST, ENDPOINT3, recipeSet,
             Response.Listener<JSONArray> { response ->
-                Log.d("API", "Recipes uploaded.")
+                Log.d("API", "Recipes uploaded. Updating Realm.")
+
+                val realm = Realm.getDefaultInstance()
+                val body = response.toString()
+
+                // Set the _id of each recipe.
+                realm.executeTransaction { realm ->
+                    try {
+                        realm.createOrUpdateAllFromJson(Recipe::class.java, body)
+                        Log.d("API", "Realm updated.")
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
             },
             Response.ErrorListener { error ->
                 Toast.makeText(
@@ -282,6 +351,13 @@ fun uploadRecipes(activity: Activity, queue: RequestQueue, recipes: RealmList<Re
     queue.add(recipePostRequest)
 }
 
+fun isConnectedToInternet(context: Context): Boolean {
+    val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val activeNetwork: NetworkInfo? = cm.activeNetworkInfo
+    val isConnected: Boolean = activeNetwork?.isConnected == false
+    return isConnected
+}
+
 fun updateRemoteRecipes(activity: Activity, queue: RequestQueue, recipes: RealmList<Recipe>) {
 
     Log.d("API", "Updating recipes: ${recipes.toString()}")
@@ -290,6 +366,9 @@ fun updateRemoteRecipes(activity: Activity, queue: RequestQueue, recipes: RealmL
     val token = getToken(activity.getApplicationContext())
 
     recipes.forEach {
+
+        Log.d("API", "Recipe: ${it.toString()}")
+        Log.d("API", "id: ${it._id}")
 
         var ingArray = JSONArray()
         for (i in 0..(it.ingredients.size-1)) {
@@ -306,12 +385,14 @@ fun updateRemoteRecipes(activity: Activity, queue: RequestQueue, recipes: RealmL
         val title = it.title
         val _id = it._id
         val updatedAt = it.updatedAt
+        val realmID = it.realmID
 
         val jsonRecipe = JSONObject().apply({
             put("ingredients", ing)
             put("directions", dir)
             put("title", title)
             put("_id", _id)
+            put("realmID", realmID)
             put("updatedAt", updatedAt)
         })
 
@@ -320,31 +401,65 @@ fun updateRemoteRecipes(activity: Activity, queue: RequestQueue, recipes: RealmL
 
     Log.d("API", "Update json: ${recipeSet.toString()}")
 
-    // Build user request
-    val recipePostRequest = object : JsonArrayRequest(Method.PUT, ENDPOINT4, recipeSet,
-            Response.Listener<JSONArray> { response ->
-                Log.d("API", "Recipes saved.")
+    val recipePutRequest = object: JsonRequest<UpdateResponse>(Request.Method.PUT, ENDPOINT4, recipeSet.toString(),
+            Response.Listener<UpdateResponse> { response ->
+                Log.d("API", "Update successful.")
+                Log.d("API", "${response.toString()}")
             },
-            Response.ErrorListener { error ->
-                Log.d("API", "Error updating remote recipes.")
-                Toast.makeText(
-                        activity.applicationContext,
-                        error.toString(),
-                        Toast.LENGTH_SHORT).show()
+            Response.ErrorListener {
+                Log.d("API", "Error: ${it.toString()}")
             }
-    ) {
+    ){
+        private val gson = Gson()
+
         override fun getHeaders(): Map<String, String> {
             val headers = HashMap<String, String>()
             headers.put("Content-Type", "application/json")
             headers.put("x-access-token", token)
             return headers
         }
+        override fun parseNetworkResponse(response: NetworkResponse?): Response<UpdateResponse> {
+            return try {
+                val json = String(
+                        response?.data ?: ByteArray(0),
+                        Charset.forName(HttpHeaderParser.parseCharset(response?.headers))
+                )
+                Log.d("API", "${json}")
+                Response.success(
+                        gson.fromJson(json, UpdateResponse::class.java),
+                        HttpHeaderParser.parseCacheHeaders(response)
+                )
+            } catch (e: UnsupportedEncodingException) {
+                Response.error(ParseError(e))
+            } catch (e: JsonSyntaxException) {
+                Response.error(ParseError(e))
+            }
+        }
     }
 
-    queue.add(recipePostRequest)
+    //    val headers = HashMap<String, String>()
+//    headers.put("Content-Type", "application/json")
+//    headers.put("x-access-token", token)
+
+//    val recipePutRequest = GsonRequest<UpdateResponse>(ENDPOINT4, recipeSet, UpdateResponse::class.java, headers,
+//            Response.Listener<UpdateResponse> { response ->
+//                Log.d("API", "Update successful.")
+//                Log.d("API", "${response.toString()}")
+////                val body = response.toString()
+////                val gson = GsonBuilder().create()
+////                val updateResponse = gson.fromJson(body, UpdateResponse::class.java)
+////                Log.d("API", updateResponse.toString())
+//            },
+//            Response.ErrorListener {
+//                Log.d("API", "Error: ${it.toString()}")
+//            }
+//    )
+
+    // Add the request to the RequestQueue.
+    queue.add(recipePutRequest)
 }
 
-fun createUser(activity: Activity, queue: RequestQueue, username: String, email: String, password: String) {
+fun createUser(activity: Activity, queue: RequestQueue, username: String, email: String, password: String, callback: (success: Boolean) -> Unit) {
 
     // Structure user data
     val json = JSONObject().apply({
@@ -363,13 +478,14 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
                 val userResponse = gson.fromJson(body, UserResponse::class.java)
                 Log.d("API", userResponse.message)
 
-                downloadToken(activity, queue, email, password, { println("login called.")})
-
-                // if there are recipes in realm, upload them.
-                synchRecipes(activity, queue, JSONArray())
+                downloadToken(activity, queue, email, password, {
+                    Log.d("API", "Logging in.")
+                    callback(true)
+                })
             },
             Response.ErrorListener { error ->
                 Log.d("API", "There was an error creating a user.")
+                callback(false)
                 Toast.makeText(
                         activity.applicationContext,
                         error.toString(),
@@ -386,10 +502,6 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
 
     // Add the request to the Volley queue
     queue.add(userRequest)
-}
-
-fun loginUser(activity: Activity, queue: RequestQueue, email: String, password: String) {
-    downloadToken(activity, queue, email, password, { println("login called.")})
 }
 
 fun downloadToken(activity: Activity, queue: RequestQueue, email: String, password: String, callback: () -> Unit) {
@@ -417,6 +529,7 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
                 callback()
             },
             Response.ErrorListener { error ->
+                Log.d("API", "error ${error.toString()}:")
                 Toast.makeText(
                         activity.applicationContext,
                         error.toString(),
@@ -440,7 +553,56 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
     queue.add(tokenRequest)
 }
 
+class GsonRequest<T>(
+        url: String,
+        body: JSONArray,
+        private val clazz: Class<T>,
+        private val headers: MutableMap<String, String>?,
+        private val listener: Response.Listener<T>,
+        errorListener: Response.ErrorListener
+) : Request<T>(Method.PUT, url, errorListener) {
+    private val gson = Gson()
+
+    override fun getHeaders(): MutableMap<String, String> = headers ?: super.getHeaders()
+
+    override fun deliverResponse(response: T) = listener.onResponse(response)
+
+    override fun parseNetworkResponse(response: NetworkResponse?): Response<T> {
+        return try {
+            val json = String(
+                    response?.data ?: ByteArray(0),
+                    Charset.forName(HttpHeaderParser.parseCharset(response?.headers)))
+            Response.success(
+                    gson.fromJson(json, clazz),
+                    HttpHeaderParser.parseCacheHeaders(response))
+        } catch (e: UnsupportedEncodingException) {
+            Response.error(ParseError(e))
+        } catch (e: JsonSyntaxException) {
+            Response.error(ParseError(e))
+        }
+    }
+}
+
 class UserResponse(val message: String, val data: User)
+
+class UpdateResponse(val ok: Int)
+
+//        {
+//            "ok":1,
+//            "writeErrors":[],
+//            "writeConcernErrors":[],
+//            "insertedIds":[],
+//            "nInserted":0,
+//            "nUpserted":0,
+//            "nMatched":1,
+//            "nModified":1,
+//            "nRemoved":0,
+//            "upserted":[],
+//            "lastOp":{
+//              "ts":"6630114502002081793",
+//              "t":2
+//            }
+//        }
 
 class RecipeResponse(val message: String)
 
