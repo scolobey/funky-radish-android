@@ -96,19 +96,19 @@ class RecipeViewActivity : AppCompatActivity() {
 
             if(directionView) {
                 // convert text to realmList and set recipe.directions
-                var directionArray = recipeViewContent.text.split("\n")
+                // TODO: clear whitespace
+                var directionArray = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
                 var recipeDirectionRealmList = RealmList<String>()
 
                 for (i in directionArray) {
                     recipeDirectionRealmList.add(i)
                 }
 
+                //  TODO: saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
                 realm.executeTransaction { _ ->
                     try {
                         recipe.directions = recipeDirectionRealmList
                         recipe.updatedAt = formattedDate + " (UTC)"
-// TODO                        saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
-
                         Log.d("API", "such success. ${recipeDirectionRealmList}, _id: ${recipe._id} ")
                     } catch (e: Exception) {
                         Log.d("API", "such failure.")
@@ -118,7 +118,7 @@ class RecipeViewActivity : AppCompatActivity() {
             }
             else {
                 // convert text to realmList and set recipe.ingredients
-                var ingredientArray = recipeViewContent.text.split("\n")
+                var ingredientArray = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
                 var recipeIngredientRealmList = RealmList<String>()
 
                 for (i in ingredientArray) {
@@ -206,14 +206,17 @@ class RecipeViewActivity : AppCompatActivity() {
         editTitleButton.setOnClickListener {
             val builder = AlertDialog.Builder(this)
             builder.setTitle("What would you like to call this recipe?")
+
             val input = EditText(this)
             input.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_NORMAL
+            input.setText(recipe.title)
             builder.setView(input)
 
             builder.setPositiveButton("OK") { dialog, which ->
                 realm.executeTransaction { realm ->
                     // change the recipe's title
-                    recipe.title = input.getText().toString()
+                    //TODO: more efficient regex
+                    recipe.title = input.getText().toString().replace("^\\s*".toRegex(), "").replace("\\s*$".toRegex(), "")
                 }
 
                 finish()
