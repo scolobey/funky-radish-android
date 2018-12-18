@@ -41,7 +41,8 @@ class LoginActivity : AppCompatActivity() {
                 downloadToken(this, queue, email, password, {
                     Log.d("API", "Executing login callback")
 
-                    toolbar.menu.removeGroup(2)
+//  This was causing a crash on login.
+//                    toolbar.menu.removeGroup(2)
 
                     this@LoginActivity.runOnUiThread(java.lang.Runnable {
                         Log.d("API", "Redirecting to main view.")

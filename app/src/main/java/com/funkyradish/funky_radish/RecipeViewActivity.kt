@@ -18,8 +18,6 @@ import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_view.*
 import io.realm.RealmList
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 
 class RecipeViewActivity : AppCompatActivity() {
@@ -90,7 +88,7 @@ class RecipeViewActivity : AppCompatActivity() {
         saveButton.setOnClickListener {
 
             val currentTime = Calendar.getInstance()
-            val formattedDate = SimpleDateFormat("EE MMM dd yyyy HH:mm:ss zZ").format(currentTime.time)
+            val formattedDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'").format(currentTime.time)
 
             Log.d("API", "saving ${formattedDate}, _id: ${recipe.toString()} ")
 
@@ -108,7 +106,7 @@ class RecipeViewActivity : AppCompatActivity() {
                 realm.executeTransaction { _ ->
                     try {
                         recipe.directions = recipeDirectionRealmList
-                        recipe.updatedAt = formattedDate + " (UTC)"
+                        recipe.updatedAt = formattedDate
                         Log.d("API", "such success. ${recipeDirectionRealmList}, _id: ${recipe._id} ")
                     } catch (e: Exception) {
                         Log.d("API", "such failure.")
@@ -128,7 +126,7 @@ class RecipeViewActivity : AppCompatActivity() {
                 realm.executeTransaction { realm ->
                     try {
                         recipe.ingredients = recipeIngredientRealmList
-                        recipe.updatedAt = formattedDate + " (UTC)"
+                        recipe.updatedAt = formattedDate
 
                         Log.d("API", "such success. ${recipeIngredientRealmList}")
 // TODO                       saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)

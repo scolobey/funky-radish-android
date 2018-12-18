@@ -140,7 +140,7 @@ fun synchRecipes(activity: Activity, queue: RequestQueue, recipes: JSONArray) {
                 }
             }
             else {
-                val formatter = SimpleDateFormat("EEE MMM d yyy HH:mm:ss")
+                val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'")
                 val localDate = formatter.parse(localRecipe.first().updatedAt)
                 val remoteDate = formatter.parse(remoteRecipe["updatedAt"].toString())
 
