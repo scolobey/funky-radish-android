@@ -4,7 +4,6 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.content.Intent
-import android.support.v4.content.ContextCompat
 import android.support.v7.widget.LinearLayoutManager
 import android.view.*
 import kotlinx.android.synthetic.main.activity_recipe_search.*
@@ -17,7 +16,7 @@ import android.widget.Toast
 import com.android.volley.toolbox.Volley
 import io.realm.*
 import java.util.*
-
+import io.realm.SyncUser
 
 class RecipeSearchActivity : AppCompatActivity() {
     private lateinit var realm: Realm
@@ -28,6 +27,9 @@ class RecipeSearchActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         realm = Realm.getDefaultInstance()
+
+        Log.d("API", "this the Realm")
+        Log.d("API", realm.toString())
 
         setContentView(R.layout.activity_recipe_search)
         setSupportActionBar(findViewById(R.id.toolbar))
@@ -42,38 +44,36 @@ class RecipeSearchActivity : AppCompatActivity() {
         var listener = RealmChangeListener<RealmResults<Recipe>>({
             prepareRecipeListView(filteredRecipes)
         })
-
         recipes.addChangeListener(listener)
 
-        Log.d("API", "Beginning recipe loader.")
-
-        if (isConnectedToInternet(this.applicationContext)) {
-            toggleOfflineMode(this.applicationContext)
-        }
+//        if (isConnected(this.applicationContext)) {
+//            // TODO: Should probably check if the user really wants to connect. What if offline is off and internet is connected?
+//            Log.d("API", "Internet is connected it seems. toggling offline mode. is Offline labeled below.")
+//            var state = isOffline(this)
+//            Log.d("API", state.toString())
+//            toggleOfflineMode(this.applicationContext)
+//            state = isOffline(this)
+//            Log.d("API", "offline toggled. is offline labeled below.")
+//            Log.d("API", state.toString())
+//        }
 
         // If offline mode is toggled on, don't try to download recipes.
         if(!isOffline(this.applicationContext)) {
-            Log.d("API", "Application is in online mode.")
+            Log.d("API", "Network access approved. Looking for a token.")
+
             var token = getToken(this.getApplicationContext())
 
-            Log.d("API", "Looking for a token.")
-
             if (token.length > 0) {
-
-                Log.d("API", "Found a token.")
-
+                Log.d("API", "Token found.")
                 val progressBar: ProgressBar = this.recipeListSpinner
 
                 Thread(Runnable {
                     this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
-                        Log.d("API", "Starting loader.")
                         progressBar.visibility = View.VISIBLE
                     })
 
-                    // create user
                     try {
                         val queue = Volley.newRequestQueue(this)
-                        loadRecipes(this, queue, token)
                     } catch (e: InterruptedException) {
                         e.printStackTrace()
                         val intent = Intent(this, LoginActivity::class.java)
@@ -94,7 +94,7 @@ class RecipeSearchActivity : AppCompatActivity() {
             }
         }
         else {
-            Log.d("API", "Application is offline.")
+            Toast.makeText(applicationContext,"Synchronization disabled.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -102,6 +102,16 @@ class RecipeSearchActivity : AppCompatActivity() {
         super.onDestroy()
         realm.close()
     }
+
+//    fun refresh() {
+//        var users = SyncUser.all()
+//
+//        if (users.size > 1) {
+//            Log.d("API", "There's too many users bra.")
+//        }
+//
+//        realm = Realm.getDefaultInstance()
+//    }
 
     fun prepareCreateRecipeButton() {
         createRecipeButton.setOnClickListener {
@@ -227,11 +237,11 @@ class RecipeSearchActivity : AppCompatActivity() {
                 builder.setTitle("This may delete recipes that have not been saved to your online account. Continue?")
 
                 builder.setPositiveButton("YES"){dialog, which ->
+
+                    SyncUser.current().logOut()
                     setToken(this.getApplicationContext(), "")
 
-                    var recipeModel = RecipeModel()
-                    val realm = Realm.getDefaultInstance()
-                    recipeModel.removeRecipes(realm)
+                    realm = Realm.getDefaultInstance()
 
                     toolbar.menu.removeGroup(1)
                     toolbar.menu.add(2, 3, 2, "Login")

@@ -37,12 +37,13 @@ class SignupActivity : AppCompatActivity() {
             // create user
             try {
                 val queue = Volley.newRequestQueue(this)
-                createUser(this, queue, username, email, password, { success: Boolean ->
+
+                // TODO: Check for existing recipes or account.
+
+                createUser(this, queue, username, email, password) { success: Boolean ->
                     Log.d("API", "Executing signup callback")
 
                     if (success) {
-                        toolbar.menu.removeGroup(2)
-
                         this@SignupActivity.runOnUiThread(java.lang.Runnable {
                             Log.d("API", "Redirecting to main view.")
 
@@ -50,14 +51,13 @@ class SignupActivity : AppCompatActivity() {
                             val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
                             startActivity(intent)
                         })
-                    }
-                    else {
+                    } else {
                         this@SignupActivity.runOnUiThread(java.lang.Runnable {
                             progressBar.visibility = View.INVISIBLE
                         })
                     }
 
-                })
+                }
             } catch (e: InterruptedException) {
                 Log.d("API", "Some kinda error.")
                 e.printStackTrace()

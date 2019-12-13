@@ -3,6 +3,7 @@ package com.funkyradish.funky_radish
 import android.content.Context
 import android.content.Intent
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -37,6 +38,8 @@ class RecipeViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
 
         itemView.setOnClickListener {
             val intent = Intent(itemView.context, RecipeViewActivity::class.java)
+
+            Log.d("API", "putting extra: ${recipe.realmID} ")
             intent.putExtra("rid", recipe.realmID)
             itemView.context.startActivity(intent)
         }

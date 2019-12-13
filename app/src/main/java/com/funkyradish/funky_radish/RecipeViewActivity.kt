@@ -39,8 +39,62 @@ class RecipeViewActivity : AppCompatActivity() {
         prepareTitleEditButton()
 
         recipeViewSwitch.setOnClickListener {
+
+            Log.d("API", "recipe view switch")
+
+            if(directionView) {
+                // convert text to realmList and set recipe.directions
+                // TODO: clear whitespace
+                var directionArray = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
+                var recipeDirectionRealmList = RealmList<String>()
+                var recipeIngredientRealmList = RealmList<String>()
+
+                for (i in directionArray) {
+                    recipeDirectionRealmList.add(i)
+                }
+
+                for (i in recipe.ingredients) {
+                    recipeIngredientRealmList.add(i)
+                }
+
+                Log.d("API", "Saving directions: ${recipe.toString()} ")
+                Log.d("API", "content: ${recipeViewContent.text} ")
+
+                saveRecipe(recipe.title, recipeDirectionRealmList, recipeIngredientRealmList)
+
+                Log.d("API", "Saved directions: ${recipe.toString()} ")
+                Log.d("API", "content: ${recipeViewContent.text} ")
+
+            }
+            else {
+                // convert text to realmList and set recipe.ingredients
+                var ingredientArray = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
+                var recipeIngredientRealmList = RealmList<String>()
+                var recipeDirectionRealmList = RealmList<String>()
+
+                for (i in ingredientArray) {
+                    recipeIngredientRealmList.add(i)
+                }
+
+                for (i in recipe.directions) {
+                    recipeDirectionRealmList.add(i)
+                }
+
+                Log.d("API", "Saving ingredients: ${recipe.toString()} ")
+                Log.d("API", "content: ${recipeViewContent.text} ")
+
+                saveRecipe(recipe.title, recipeDirectionRealmList, recipeIngredientRealmList)
+
+                Log.d("API", "Saved ingredients: ${recipe.toString()} ")
+                Log.d("API", "content: ${recipeViewContent.text} ")
+            }
+
+            Log.d("API", "finishing")
+
             directionView = !directionView
+            loadRecipe()
             prepareRecipeView()
+
         }
     }
 
@@ -82,15 +136,43 @@ class RecipeViewActivity : AppCompatActivity() {
         prepareSaveButton()
     }
 
+    private fun saveRecipe(title: String, directions: RealmList<String>, ingredients: RealmList<String>) :Recipe {
+
+        Log.d("API", "Saving recipe: ${recipe.toString()}")
+
+        realm.executeTransaction { _ ->
+            try {
+                Log.d("SAVE", "title: ${title}")
+                Log.d("Saving", "directions: ${directions.toString()}")
+                Log.d("Saving", "ingredients: ${ingredients.toString()}")
+
+                recipe.title = title
+                recipe.directions = directions
+                recipe.ingredients = ingredients
+
+                Log.d("Saving", "title: ${recipe.title}")
+                Log.d("Saving", "directions: ${recipe.directions.toString()}")
+                Log.d("Saving", "ingredients: ${recipe.ingredients.toString()}")
+
+                Log.d("Saving", "recipe saved.: ${recipe.toString()}")
+            } catch (e: Exception) {
+                Log.d("API", "such failure.")
+                e.printStackTrace()
+            }
+        }
+
+        return recipe
+    }
+
     private fun prepareSaveButton() {
         val saveButton = findViewById<Button>(R.id.action_save)
 
         saveButton.setOnClickListener {
 
-            val currentTime = Calendar.getInstance()
-            val formattedDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'").format(currentTime.time)
-
-            Log.d("API", "saving ${formattedDate}, _id: ${recipe.toString()} ")
+//            val currentTime = Calendar.getInstance()
+//            val formattedDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'").format(currentTime.time)
+//
+//            Log.d("API", "saving ${formattedDate}, _id: ${recipe.toString()} ")
 
             if(directionView) {
                 // convert text to realmList and set recipe.directions
@@ -102,17 +184,7 @@ class RecipeViewActivity : AppCompatActivity() {
                     recipeDirectionRealmList.add(i)
                 }
 
-                //  TODO: saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
-                realm.executeTransaction { _ ->
-                    try {
-                        recipe.directions = recipeDirectionRealmList
-                        recipe.updatedAt = formattedDate
-                        Log.d("API", "such success. ${recipeDirectionRealmList}, _id: ${recipe._id} ")
-                    } catch (e: Exception) {
-                        Log.d("API", "such failure.")
-                        e.printStackTrace()
-                    }
-                }
+                recipe = saveRecipe(recipe.title, recipeDirectionRealmList, recipe.ingredients)
             }
             else {
                 // convert text to realmList and set recipe.ingredients
@@ -123,18 +195,7 @@ class RecipeViewActivity : AppCompatActivity() {
                     recipeIngredientRealmList.add(i)
                 }
 
-                realm.executeTransaction { realm ->
-                    try {
-                        recipe.ingredients = recipeIngredientRealmList
-                        recipe.updatedAt = formattedDate
-
-                        Log.d("API", "such success. ${recipeIngredientRealmList}")
-// TODO                       saveRecipe(this, queue, recipe.title, ingredientArray, directionArray)
-                    } catch (e: Exception) {
-                        Log.d("API", "such failure.")
-                        e.printStackTrace()
-                    }
-                }
+                recipe = saveRecipe(recipe.title, recipe.directions, recipeIngredientRealmList)
             }
 
             this.hideKeyboard()
@@ -142,7 +203,11 @@ class RecipeViewActivity : AppCompatActivity() {
     }
 
     private fun prepareRecipeView() {
+
+        Log.d("API", "Preparing recipe view. _id: ${recipe.realmID}")
+
         if(directionView) {
+            Log.d("API", "direction view: ${recipe.directions}")
             recipeViewTitle.text = "Directions"
 
             if(recipe.directions.size > 0) {
@@ -153,8 +218,11 @@ class RecipeViewActivity : AppCompatActivity() {
                     dirString.append(dirs!![i]).append("\n")
                 }
 
-                val finalIngredientString = dirString.toString()
-                recipeViewContent.setText(finalIngredientString)
+                val finalDirectionString = dirString.toString()
+
+                Log.d("API", "setting directions: ${finalDirectionString}")
+
+                recipeViewContent.setText(finalDirectionString)
             }
 
             else {
@@ -163,6 +231,7 @@ class RecipeViewActivity : AppCompatActivity() {
 
         }
         else {
+            Log.d("API", "ingredient view: ${recipe.ingredients}")
             recipeViewTitle.text = "Ingredients"
 
             val ings = recipe.ingredients
@@ -173,6 +242,9 @@ class RecipeViewActivity : AppCompatActivity() {
             }
 
             val finalIngredientString = ingString.toString()
+
+            Log.d("API", "setting ingredients: ${finalIngredientString}")
+
             recipeViewContent.setText(finalIngredientString)
         }
     }
@@ -210,11 +282,32 @@ class RecipeViewActivity : AppCompatActivity() {
             input.setText(recipe.title)
             builder.setView(input)
 
+            val title = input.getText().toString().replace("^\\s*".toRegex(), "").replace("\\s*$".toRegex(), "")
+
             builder.setPositiveButton("OK") { dialog, which ->
-                realm.executeTransaction { realm ->
-                    // change the recipe's title
-                    //TODO: more efficient regex
-                    recipe.title = input.getText().toString().replace("^\\s*".toRegex(), "").replace("\\s*$".toRegex(), "")
+
+                if(directionView) {
+                    // convert text to realmList and set recipe.directions
+                    // TODO: clear whitespace
+                    var directionArray = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
+                    var recipeDirectionRealmList = RealmList<String>()
+
+                    for (i in directionArray) {
+                        recipeDirectionRealmList.add(i)
+                    }
+
+                    recipe = saveRecipe(title, recipeDirectionRealmList, recipe.ingredients)
+                }
+                else {
+                    // convert text to realmList and set recipe.ingredients
+                    var ingredientArray = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
+                    var recipeIngredientRealmList = RealmList<String>()
+
+                    for (i in ingredientArray) {
+                        recipeIngredientRealmList.add(i)
+                    }
+
+                    recipe = saveRecipe(title, recipe.directions, recipeIngredientRealmList)
                 }
 
                 finish()

@@ -34,11 +34,11 @@ class LoginActivity : AppCompatActivity() {
                 progressSpinner.visibility = View.VISIBLE
             })
 
-            // create user
+            // login
             try {
                 Log.d("API", "Calling for a token.")
                 val queue = Volley.newRequestQueue(this)
-                downloadToken(this, queue, email, password, {
+                downloadToken(this, queue, email, password, false, {
                     Log.d("API", "Executing login callback")
 
 //  This was causing a crash on login.
