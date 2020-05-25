@@ -26,6 +26,17 @@ class RecipeSearchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (SyncUser.current() != null) {
+            Log.d("API", "there is a user")
+            val user = SyncUser.current()
+            val url = Constants.REALM_URL
+            val synchConfiguration = user.createConfiguration(url)
+                    .fullSynchronization()
+                    .build()
+
+            Realm.setDefaultConfiguration(synchConfiguration)
+        }
+
         realm = Realm.getDefaultInstance()
 
         Log.d("API", "this the Realm")
@@ -177,9 +188,11 @@ class RecipeSearchActivity : AppCompatActivity() {
         val inflater = menuInflater
 
         var token = getToken(this.getApplicationContext())
+        var userEmail = getUserEmail(this.getApplicationContext())
+
 
         if (token.length > 0) {
-            menu.add(1, 1, 1, token)
+            menu.add(1, 1, 1, userEmail)
             menu.add(1, 2, 1, "Logout")
         } else {
             menu.add(2, 3, 2, "Login")
@@ -240,8 +253,13 @@ class RecipeSearchActivity : AppCompatActivity() {
 
                     SyncUser.current().logOut()
                     setToken(this.getApplicationContext(), "")
+                    setUsername(this.getApplicationContext(), "")
+                    setUserEmail(this.getApplicationContext(), "")
 
                     realm = Realm.getDefaultInstance()
+
+                    // clear recipes
+                    recipes = realm.where(Recipe::class.java).findAll()
 
                     toolbar.menu.removeGroup(1)
                     toolbar.menu.add(2, 3, 2, "Login")

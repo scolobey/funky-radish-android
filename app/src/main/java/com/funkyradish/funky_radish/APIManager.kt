@@ -27,6 +27,8 @@ val ENDPOINT2 = "http://10.0.2.2:8080/authenticate"
 //val ENDPOINT4 = "hhttp://10.0.2.2:8080/updateRecipes"
 
 val FR_TOKEN = "fr_token"
+val FR_USERNAME = "fr_username"
+val FR_USER_EMAIL = "fr_user_email"
 val OFFLINE = "fr_offline"
 
 fun getToken(context: Context): String {
@@ -38,6 +40,30 @@ fun setToken(context: Context, token: String) {
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
     val editor = preferences.edit()
     editor.putString(FR_TOKEN, token)
+    editor.apply()
+}
+
+fun getUserEmail(context: Context): String {
+    val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+    return preferences.getString(FR_USER_EMAIL, "")
+}
+
+fun setUserEmail(context: Context, userEmail: String) {
+    val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+    val editor = preferences.edit()
+    editor.putString(FR_USER_EMAIL, userEmail)
+    editor.apply()
+}
+
+fun getUsername(context: Context): String {
+    val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+    return preferences.getString(FR_USERNAME, "")
+}
+
+fun setUsername(context: Context, username: String) {
+    val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+    val editor = preferences.edit()
+    editor.putString(FR_USERNAME, username)
     editor.apply()
 }
 
@@ -89,26 +115,53 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
             Response.Listener<JSONObject> { response ->
                 Log.d("API", "User created.")
                 val body = response.toString()
+
+                Log.d("API", "response string: ${body}:")
+
                 val gson = GsonBuilder().create()
                 val userResponse = gson.fromJson(body, UserResponse::class.java)
                 Log.d("API", userResponse.message)
 
-                downloadToken(activity, queue, email, password, false, {
-                    Log.d("API", "Logging in.")
+                Log.d("API", "user response: ${userResponse.toString()}:")
 
-                    callback(true)
-                })
+
+                val FR_TOKEN = "fr_token"
+                val FR_USERNAME = "fr_username"
+                val FR_USER_EMAIL = "fr_user_email"
+                val preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
+
+                val token = userResponse.token
+                val username = userResponse.userData.name
+                val email = userResponse.userData.email
+
+                val editor = preferences.edit()
+
+                editor.putString(FR_TOKEN, token)
+                editor.putString(FR_USERNAME, username)
+                editor.putString(FR_USER_EMAIL, email)
+                editor.apply()
+
+                createRealmUser(token, callback, activity)
+
+
+//                downloadToken(activity, queue, email, password, false, {
+//                    Log.d("API", "Logging in.")
+//
+//                    callback(true)
+//                })
             },
             Response.ErrorListener { error ->
                 Log.d("API", "There was an error creating a user.")
                 error.printStackTrace()
                 Log.d("API", error.toString())
 
-                callback(false)
+
                 Toast.makeText(
                         activity.applicationContext,
                         error.toString(),
                         Toast.LENGTH_SHORT).show()
+
+                callback(false)
 
             }
     ) {
@@ -132,7 +185,7 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
 
 }
 
-fun downloadToken(activity: Activity, queue: RequestQueue, email: String, password: String, login: Boolean, callback: () -> Unit) {
+fun downloadToken(activity: Activity, queue: RequestQueue, email: String, password: String, callback: (success: Boolean) -> Unit) {
     Log.d("API", "Requesting authorization token.")
 
     // Prepare a space for your token in preferences.
@@ -152,7 +205,7 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
 
                 Log.d("API", "Token stored: ${token}")
 
-                createRealmUser(email, password, login, callback, activity)
+                createRealmUser(token, callback, activity)
 
 //                callback()
             },
@@ -163,7 +216,7 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
                         error.toString(),
                         Toast.LENGTH_SHORT).show()
 
-                callback()
+                callback(false)
             }
     ) {
         override fun getBodyContentType(): String {
@@ -181,16 +234,17 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
     queue.add(tokenRequest)
 }
 
-fun createRealmUser(username: String, password: String, login: Boolean, callback: () -> Unit, activity: Activity) {
+fun createRealmUser(token: String, callback: (success: Boolean) -> Unit, activity: Activity) {
     Log.d("API", "Time to access the Realm.")
 
-    var credentials = SyncCredentials.usernamePassword(username, password, true)
+//    var credentials = SyncCredentials.usernamePassword(username, password, true)
 
-    val callback = object : SyncUser.Callback<SyncUser> {
+    var credentials = SyncCredentials.jwt(token)
+
+    val callback2 = object : SyncUser.Callback<SyncUser> {
         override fun onSuccess(user: SyncUser) {
             Log.d("API", "realm access successful.")
-
-            callback()
+            callback(true)
         }
 
         override fun onError(error: ObjectServerError) {
@@ -206,14 +260,14 @@ fun createRealmUser(username: String, password: String, login: Boolean, callback
                     errorMsg,
                     Toast.LENGTH_SHORT).show()
 
-            callback()
+            callback(false)
         }
     }
 
-    SyncUser.logInAsync(credentials, AUTH_URL, callback)
+    SyncUser.logInAsync(credentials, AUTH_URL, callback2)
 }
 
-class UserResponse(val message: String, val data: User)
+class UserResponse(val message: String, val token: String, val userData: User)
 
 class User(val email: String, val name: String, val _id: String)
 

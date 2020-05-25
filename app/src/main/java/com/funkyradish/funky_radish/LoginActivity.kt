@@ -38,11 +38,12 @@ class LoginActivity : AppCompatActivity() {
             try {
                 Log.d("API", "Calling for a token.")
                 val queue = Volley.newRequestQueue(this)
-                downloadToken(this, queue, email, password, false, {
+
+                downloadToken(this, queue, email, password) {
                     Log.d("API", "Executing login callback")
 
-//  This was causing a crash on login.
-//                    toolbar.menu.removeGroup(2)
+//                  This was causing a crash on login.
+//                  toolbar.menu.removeGroup(2)
 
                     this@LoginActivity.runOnUiThread(java.lang.Runnable {
                         Log.d("API", "Redirecting to main view.")
@@ -51,7 +52,7 @@ class LoginActivity : AppCompatActivity() {
                         val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
                         startActivity(intent)
                     })
-                })
+                }
 
             } catch (e: InterruptedException) {
                 Log.d("API", "Some kinda error.")
