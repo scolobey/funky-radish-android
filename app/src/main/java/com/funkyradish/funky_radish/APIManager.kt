@@ -104,57 +104,20 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
         put("admin", false)
     })
 
-    Log.d("API", "Params start.")
-    Log.d("API", username)
-    Log.d("API", email)
-    Log.d("API", password)
-    Log.d("API", "Params end.")
-
-    // Build user request
+    // User request
     val userRequest = object : JsonObjectRequest(Method.POST, ENDPOINT, json,
             Response.Listener<JSONObject> { response ->
-                Log.d("API", "User created.")
+
                 val body = response.toString()
+                val userResponse = GsonBuilder().create().fromJson(body, UserResponse::class.java)
 
-                Log.d("API", "response string: ${body}:")
+                setToken(activity.applicationContext, userResponse.token)
+                setUsername(activity.applicationContext, userResponse.userData.name)
+                setUserEmail(activity.applicationContext, userResponse.userData.email)
 
-                val gson = GsonBuilder().create()
-                val userResponse = gson.fromJson(body, UserResponse::class.java)
-                Log.d("API", userResponse.message)
-
-                Log.d("API", "user response: ${userResponse.toString()}:")
-
-
-                val FR_TOKEN = "fr_token"
-                val FR_USERNAME = "fr_username"
-                val FR_USER_EMAIL = "fr_user_email"
-                val preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
-
-                val token = userResponse.token
-                val username = userResponse.userData.name
-                val email = userResponse.userData.email
-
-                val editor = preferences.edit()
-
-                editor.putString(FR_TOKEN, token)
-                editor.putString(FR_USERNAME, username)
-                editor.putString(FR_USER_EMAIL, email)
-                editor.apply()
-
-                createRealmUser(token, callback, activity)
-
-
-//                downloadToken(activity, queue, email, password, false, {
-//                    Log.d("API", "Logging in.")
-//
-//                    callback(true)
-//                })
+                createRealmUser(userResponse.token, callback, activity)
             },
             Response.ErrorListener { error ->
-                Log.d("API", "There was an error creating a user.")
-                error.printStackTrace()
-                Log.d("API", error.toString())
-
 
                 Toast.makeText(
                         activity.applicationContext,
@@ -235,21 +198,27 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
 }
 
 fun createRealmUser(token: String, callback: (success: Boolean) -> Unit, activity: Activity) {
-    Log.d("API", "Time to access the Realm.")
-
-//    var credentials = SyncCredentials.usernamePassword(username, password, true)
+    Log.d("API", "Realm User: ${token}")
 
     var credentials = SyncCredentials.jwt(token)
 
     val callback2 = object : SyncUser.Callback<SyncUser> {
         override fun onSuccess(user: SyncUser) {
-            Log.d("API", "realm access successful.")
+            Log.d("API", "Realm access successful: Realm User: ${user}")
+
+            val url = Constants.REALM_URL
+            val synchConfiguration = user.createConfiguration(url)
+                    .fullSynchronization()
+                    .build()
+
+            Realm.setDefaultConfiguration(synchConfiguration)
+
             callback(true)
         }
 
         override fun onError(error: ObjectServerError) {
-            Log.d("API", "the realm connection has failed")
-            Log.d("API", error.toString())
+            Log.d("API", "Realm connectionfailed")
+
             val errorMsg: String = when (error.errorCode) {
                 ErrorCode.UNKNOWN_ACCOUNT -> "unknown account"
                 ErrorCode.INVALID_CREDENTIALS -> "invalid credentials"

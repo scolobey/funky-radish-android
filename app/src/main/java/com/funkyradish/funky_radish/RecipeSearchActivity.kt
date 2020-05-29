@@ -26,20 +26,8 @@ class RecipeSearchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (SyncUser.current() != null) {
-            Log.d("API", "there is a user")
-            val user = SyncUser.current()
-            val url = Constants.REALM_URL
-            val synchConfiguration = user.createConfiguration(url)
-                    .fullSynchronization()
-                    .build()
-
-            Realm.setDefaultConfiguration(synchConfiguration)
-        }
-
         realm = Realm.getDefaultInstance()
 
-        Log.d("API", "this the Realm")
         Log.d("API", realm.toString())
 
         setContentView(R.layout.activity_recipe_search)
@@ -113,16 +101,6 @@ class RecipeSearchActivity : AppCompatActivity() {
         super.onDestroy()
         realm.close()
     }
-
-//    fun refresh() {
-//        var users = SyncUser.all()
-//
-//        if (users.size > 1) {
-//            Log.d("API", "There's too many users bra.")
-//        }
-//
-//        realm = Realm.getDefaultInstance()
-//    }
 
     fun prepareCreateRecipeButton() {
         createRecipeButton.setOnClickListener {
@@ -252,13 +230,13 @@ class RecipeSearchActivity : AppCompatActivity() {
                 builder.setPositiveButton("YES"){dialog, which ->
 
                     SyncUser.current().logOut()
+
                     setToken(this.getApplicationContext(), "")
                     setUsername(this.getApplicationContext(), "")
                     setUserEmail(this.getApplicationContext(), "")
 
+                    realm.close()
                     realm = Realm.getDefaultInstance()
-
-                    // clear recipes
                     recipes = realm.where(Recipe::class.java).findAll()
 
                     toolbar.menu.removeGroup(1)

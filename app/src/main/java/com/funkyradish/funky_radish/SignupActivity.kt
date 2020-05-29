@@ -41,13 +41,8 @@ class SignupActivity : AppCompatActivity() {
                 // TODO: Check for existing recipes or account.
 
                 createUser(this, queue, username, email, password) { success: Boolean ->
-                    Log.d("API", "Executing signup callback")
-
                     if (success) {
                         this@SignupActivity.runOnUiThread(java.lang.Runnable {
-                            Log.d("API", "Redirecting to main view.")
-
-                            // Set up recipes. Is device already logged in? Are there recipes on the device?
                             val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
                             startActivity(intent)
                         })
@@ -66,8 +61,7 @@ class SignupActivity : AppCompatActivity() {
     }
 
     fun loginSegue(view: View) {
-        val intent = Intent(this, LoginActivity::class.java).apply {
-        }
+        val intent = Intent(this, LoginActivity::class.java).apply {}
         startActivity(intent)
     }
 }

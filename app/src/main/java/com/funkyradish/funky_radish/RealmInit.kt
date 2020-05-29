@@ -10,22 +10,15 @@ class RealmInit : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        Log.d("API", "Initializing Realm")
         Realm.init(this)
 
-        Log.d("API", "Initializing Realm")
-
-        var users = SyncUser.all()
-
-        if (users.size > 0) {
-            for (entry in users) {
-                Log.d("API", "User detected")
-            }
-        }
-
         if (SyncUser.current() != null) {
-            val user = SyncUser.current()
+            Log.d("API", "There is a user")
+
+            val currentUser = SyncUser.current()
             val url = Constants.REALM_URL
-            val synchConfiguration = user.createConfiguration(url)
+            val synchConfiguration = currentUser.createConfiguration(url)
                     .fullSynchronization()
                     .build()
 
