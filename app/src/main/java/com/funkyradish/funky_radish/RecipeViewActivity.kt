@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.text.InputType
 import android.util.Log
@@ -17,7 +16,7 @@ import android.widget.Toast
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_view.*
 import io.realm.RealmList
-import java.text.SimpleDateFormat
+import io.realm.kotlin.createObject
 import java.util.*
 
 class RecipeViewActivity : AppCompatActivity() {
@@ -38,73 +37,77 @@ class RecipeViewActivity : AppCompatActivity() {
         prepareTitleEditButton()
 
         recipeViewSwitch.setOnClickListener {
-
-            Log.d("API", "recipe view switch")
-
             saveRecipe(recipe.title)
-
             directionView = !directionView
-
             loadRecipe()
             prepareRecipeView()
         }
     }
 
     private fun loadRecipe() {
-        // Load recipe if an id is provided. Create a new recipe if id is not provided.
         val recipeID: String = intent.getStringExtra("rid")
-//        val recipeTitle: String = intent.getStringExtra("recipe_title")
-
         recipe = realm.where(Recipe::class.java).equalTo("realmID", recipeID).findFirst()!!
-
-        Log.d("API", "displaying: ${recipe.toString()} ")
-
     }
 
     private fun prepareToolbar() {
         setSupportActionBar(toolbar)
         getSupportActionBar()!!.setTitle(recipe.title);
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
         prepareSaveButton()
     }
 
     private fun saveRecipe(title: String) {
-        Log.d("API", "Saving recipe: ${recipe.toString()}")
 
-        var recipeDirectionRealmList = RealmList<String>()
-        var recipeIngredientRealmList = RealmList<String>()
+//        var recipeDirectionRealmList = RealmList<Direction>()
+//        var recipeIngredientRealmList = RealmList<Ingredient>()
         var textBoxContents = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
 
-        if(directionView) {
-            for (i in textBoxContents) {
-                recipeDirectionRealmList.add(i)
-            }
-
-            for (i in recipe.ingredients) {
-                recipeIngredientRealmList.add(i)
-            }
-        }
-        else {
-
-            for (i in recipe.directions) {
-                recipeDirectionRealmList.add(i)
-            }
-
-            for (i in textBoxContents) {
-                recipeIngredientRealmList.add(i)
-            }
-        }
-
-        Log.d("API", "saving: ${title}")
+//        if(directionView) {
+//            Log.d("API", "Directions saving")
+//
+//            for (i in textBoxContents) {
+//
+//                realm.executeTransaction { _ ->
+//                    try {
+//                        val direction = realm.createObject(Direction::class.java)
+//                        direction.text = i
+//                        recipeDirectionRealmList.add(direction)
+//
+//                    } catch (e: Exception) {
+//                        e.printStackTrace()
+//                    }
+//                }
+//
+//
+//            }
+//
+//            recipeIngredientRealmList = recipe.ingredients
+//        }
+//        else {
+//
+//            Log.d("API", "Ingredients saving")
+//            recipeDirectionRealmList = recipe.directions
+//
+//            for (i in textBoxContents) {
+//                var ingredient = Ingredient()
+//                ingredient.name = i
+//                recipeIngredientRealmList.add(ingredient)
+//            }
+//
+//        }
 
         realm.executeTransaction { _ ->
             try {
                 recipe.title = title
-                recipe.directions = recipeDirectionRealmList
-                recipe.ingredients = recipeIngredientRealmList
+
+                for (i in textBoxContents) {
+                    val direction = realm.createObject<Direction>(UUID.randomUUID().toString())
+                    direction.text = "fido"
+                    recipe.directions.add(direction)
+                }
+
+
             } catch (e: Exception) {
-                Log.d("API", "such failure.")
                 e.printStackTrace()
             }
         }
@@ -122,48 +125,31 @@ class RecipeViewActivity : AppCompatActivity() {
     }
 
     private fun prepareRecipeView() {
-
-        Log.d("API", "Preparing recipe view. _id: ${recipe.realmID}")
+        val contentString = StringBuilder()
 
         if(directionView) {
-            Log.d("API", "direction view: ${recipe.directions}")
             recipeViewTitle.text = "Directions"
 
-            if(recipe.directions.size > 0) {
-                val dirs = recipe.directions
-                val dirString = StringBuilder()
+            val dirs = recipe.directions
 
-                for (i in 0 until dirs!!.size) {
-                    dirString.append(dirs!![i]).append("\n")
-                }
+            Log.d("API", "Directions: ${recipe.directions}")
 
-                val finalDirectionString = dirString.toString()
-
-                Log.d("API", "setting directions: ${finalDirectionString}")
-
-                recipeViewContent.setText(finalDirectionString)
+            for (i in 0 until dirs!!.size) {
+                contentString.append(dirs!![i]!!.text).append("\n")
             }
-
-            else {
-                recipeViewContent.setText("")
-            }
-
         }
         else {
-            Log.d("API", "ingredient view: ${recipe.ingredients}")
             recipeViewTitle.text = "Ingredients"
 
             val ings = recipe.ingredients
-            val ingString = StringBuilder()
 
             for (i in 0 until ings!!.size) {
-                ingString.append(ings!![i]).append("\n")
+                contentString.append(ings!![i]!!.name).append("\n")
             }
-
-            val finalIngredientString = ingString.toString()
-
-            recipeViewContent.setText(finalIngredientString)
         }
+
+        val finalContentString = contentString.toString()
+        recipeViewContent.setText(finalContentString)
     }
 
     private fun prepareTrashButton() {
@@ -199,8 +185,6 @@ class RecipeViewActivity : AppCompatActivity() {
             input.setText(recipe.title)
             builder.setView(input)
 
-            Log.d("API", "changing title: ${title}")
-
             builder.setPositiveButton("OK") { dialog, which ->
                 val title = input.getText().toString().replace("^\\s*".toRegex(), "").replace("\\s*$".toRegex(), "")
                 saveRecipe(title)
@@ -214,10 +198,6 @@ class RecipeViewActivity : AppCompatActivity() {
             builder.show()
         }
     }
-
-//    fun Fragment.hideKeyboard() {
-//        activity!!.hideKeyboard(view!!)
-//    }
 
     private fun Activity.hideKeyboard() {
         hideKeyboard(if (currentFocus == null) View(this) else currentFocus)

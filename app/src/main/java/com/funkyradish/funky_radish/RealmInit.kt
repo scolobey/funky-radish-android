@@ -25,6 +25,9 @@ class RealmInit : Application() {
             Realm.setDefaultConfiguration(synchConfiguration)
         }
         else {
+
+            Log.d("API", "Configuring default Realm")
+
             val realmConfiguration = RealmConfiguration.Builder()
                     .name(REALM_DB_NAME)
                     .build()
