@@ -32,9 +32,16 @@ class RecipeListAdapter(val recipes: RealmResults<Recipe>, val context: Context)
 class RecipeViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
 
     fun bind(recipe: Recipe) {
+        //TODO: Clean this up with a map
+        val contentString = StringBuilder()
+        val ings = recipe.ingredients
+
+        for (i in 0 until ings!!.size) {
+            contentString.append(ings!![i]!!.name).append("\n")
+        }
 
         itemView.recipeViewTitle.text = recipe.title
-        itemView.ingredientContainer.text = recipe.ingredients.joinToString("\n")
+        itemView.ingredientContainer.text = contentString
 
         itemView.setOnClickListener {
             val intent = Intent(itemView.context, RecipeViewActivity::class.java)

@@ -17,6 +17,7 @@ import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_view.*
 import io.realm.RealmList
 import io.realm.kotlin.createObject
+import io.realm.kotlin.delete
 import java.util.*
 
 class RecipeViewActivity : AppCompatActivity() {
@@ -58,54 +59,30 @@ class RecipeViewActivity : AppCompatActivity() {
 
     private fun saveRecipe(title: String) {
 
-//        var recipeDirectionRealmList = RealmList<Direction>()
-//        var recipeIngredientRealmList = RealmList<Ingredient>()
         var textBoxContents = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
-
-//        if(directionView) {
-//            Log.d("API", "Directions saving")
-//
-//            for (i in textBoxContents) {
-//
-//                realm.executeTransaction { _ ->
-//                    try {
-//                        val direction = realm.createObject(Direction::class.java)
-//                        direction.text = i
-//                        recipeDirectionRealmList.add(direction)
-//
-//                    } catch (e: Exception) {
-//                        e.printStackTrace()
-//                    }
-//                }
-//
-//
-//            }
-//
-//            recipeIngredientRealmList = recipe.ingredients
-//        }
-//        else {
-//
-//            Log.d("API", "Ingredients saving")
-//            recipeDirectionRealmList = recipe.directions
-//
-//            for (i in textBoxContents) {
-//                var ingredient = Ingredient()
-//                ingredient.name = i
-//                recipeIngredientRealmList.add(ingredient)
-//            }
-//
-//        }
 
         realm.executeTransaction { _ ->
             try {
                 recipe.title = title
 
-                for (i in textBoxContents) {
-                    val direction = realm.createObject<Direction>(UUID.randomUUID().toString())
-                    direction.text = "fido"
-                    recipe.directions.add(direction)
-                }
+                if(directionView) {
+                    recipe.directions.deleteAllFromRealm()
 
+                    for (i in textBoxContents) {
+                        val dir = realm.createObject<Direction>(UUID.randomUUID().toString())
+                        dir.text = i
+                        recipe.directions.add(dir)
+                    }
+                }
+                else {
+                    recipe.ingredients.deleteAllFromRealm()
+
+                    for (i in textBoxContents) {
+                        val ing = realm.createObject<Ingredient>(UUID.randomUUID().toString())
+                        ing.name = i
+                        recipe.ingredients.add(ing)
+                    }
+                }
 
             } catch (e: Exception) {
                 e.printStackTrace()
