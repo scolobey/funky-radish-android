@@ -15,9 +15,7 @@ import android.widget.EditText
 import android.widget.Toast
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_view.*
-import io.realm.RealmList
 import io.realm.kotlin.createObject
-import io.realm.kotlin.delete
 import java.util.*
 
 class RecipeViewActivity : AppCompatActivity() {
@@ -57,7 +55,7 @@ class RecipeViewActivity : AppCompatActivity() {
         prepareSaveButton()
     }
 
-    private fun saveRecipe(title: String) {
+    private fun saveRecipe(title: String?) {
 
         var textBoxContents = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
 

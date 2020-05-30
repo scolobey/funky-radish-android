@@ -10,7 +10,7 @@ open class Recipe : RealmObject() {
     @PrimaryKey
     open var realmID: String = ""
 
-    open var title: String = ""
+    open var title: String? = null
 
     var ingredients: RealmList<Ingredient> = RealmList()
 

@@ -11,6 +11,7 @@ class RealmInit : Application() {
         super.onCreate()
 
         Log.d("API", "Initializing Realm")
+
         Realm.init(this)
 
         if (SyncUser.current() != null) {
@@ -29,7 +30,7 @@ class RealmInit : Application() {
             Log.d("API", "Configuring default Realm")
 
             val realmConfiguration = RealmConfiguration.Builder()
-                    .name(REALM_DB_NAME)
+                    .name(Constants.REALM_DB_NAME)
                     .build()
 
             Realm.setDefaultConfiguration(realmConfiguration)
@@ -37,9 +38,6 @@ class RealmInit : Application() {
 
     }
 
-    companion object {
-        private val REALM_DB_NAME = "fr_realm_db"
-    }
 
 
 }

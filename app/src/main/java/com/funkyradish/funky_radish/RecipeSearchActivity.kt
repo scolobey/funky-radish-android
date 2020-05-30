@@ -224,20 +224,41 @@ class RecipeSearchActivity : AppCompatActivity() {
             }
             // Logout
             2 -> {
+
+                Log.d("API", "Realm: ${realm.toString()}.")
+
                 val builder = AlertDialog.Builder(this)
                 builder.setTitle("This may delete recipes that have not been saved to your online account. Continue?")
 
                 builder.setPositiveButton("YES"){dialog, which ->
 
+                    realm.close()
+
+                    Log.d("API", "User: ${SyncUser.current()}.")
                     SyncUser.current().logOut()
 
                     setToken(this.getApplicationContext(), "")
                     setUsername(this.getApplicationContext(), "")
                     setUserEmail(this.getApplicationContext(), "")
 
-                    realm.close()
+
+                    Log.d("API", "Configuring default Realm")
+
+                    val realmConfiguration = RealmConfiguration.Builder()
+                            .name(Constants.REALM_DB_NAME)
+                            .build()
+
+                    Realm.setDefaultConfiguration(realmConfiguration)
                     realm = Realm.getDefaultInstance()
+
+
+                    Log.d("API", "Realm: ${realm.toString()}.")
+
                     recipes = realm.where(Recipe::class.java).findAll()
+                    prepareRecipeListView(filteredRecipes)
+
+                    Log.d("API", "Realm: ${realm.toString()}.")
+                    Log.d("API", "Recipes: ${recipes.toString()}.")
 
                     toolbar.menu.removeGroup(1)
                     toolbar.menu.add(2, 3, 2, "Login")
