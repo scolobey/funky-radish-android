@@ -8,15 +8,20 @@ import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.text.InputType
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_view.*
 import io.realm.kotlin.createObject
 import java.util.*
+import android.view.KeyEvent.KEYCODE_BACK
+
+
 
 class RecipeViewActivity : AppCompatActivity() {
 
@@ -172,6 +177,13 @@ class RecipeViewActivity : AppCompatActivity() {
 
             builder.show()
         }
+    }
+
+    // Override Home action.
+    override fun onSupportNavigateUp(): Boolean {
+        saveRecipe(recipe.title)
+        finish()
+        return true
     }
 
     private fun Activity.hideKeyboard() {
