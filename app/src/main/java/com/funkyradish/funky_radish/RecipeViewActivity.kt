@@ -8,24 +8,18 @@ import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.text.InputType
 import android.util.Log
-import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_view.*
 import io.realm.kotlin.createObject
 import java.util.*
-import android.view.KeyEvent.KEYCODE_BACK
-
-
 
 class RecipeViewActivity : AppCompatActivity() {
 
-    var directionView: Boolean = true
     val realm = Realm.getDefaultInstance()
     var recipe = Recipe()
 
@@ -42,7 +36,10 @@ class RecipeViewActivity : AppCompatActivity() {
 
         recipeViewSwitch.setOnClickListener {
             saveRecipe(recipe.title)
-            directionView = !directionView
+
+            val dir = intent.extras.getBoolean("direction")
+            intent.putExtra("direction", !dir)
+
             loadRecipe()
             prepareRecipeView()
         }
@@ -62,6 +59,7 @@ class RecipeViewActivity : AppCompatActivity() {
 
     private fun saveRecipe(title: String?) {
 
+        val directionView = intent.extras.getBoolean("direction")
         var textBoxContents = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
 
         realm.executeTransaction { _ ->
@@ -105,6 +103,8 @@ class RecipeViewActivity : AppCompatActivity() {
     }
 
     private fun prepareRecipeView() {
+
+        val directionView = intent.extras.getBoolean("direction")
         val contentString = StringBuilder()
 
         if(directionView) {
@@ -167,9 +167,13 @@ class RecipeViewActivity : AppCompatActivity() {
 
             builder.setPositiveButton("OK") { dialog, which ->
                 val title = input.getText().toString().replace("^\\s*".toRegex(), "").replace("\\s*$".toRegex(), "")
+
                 saveRecipe(title)
+
                 finish()
-                startActivity(getIntent())
+
+                var intent = getIntent()
+                startActivity(intent)
             }
             builder.setNegativeButton("Cancel") {
                 dialog, which -> dialog.cancel()

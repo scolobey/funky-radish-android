@@ -45,9 +45,8 @@ class RecipeViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
 
         itemView.setOnClickListener {
             val intent = Intent(itemView.context, RecipeViewActivity::class.java)
-
-            Log.d("API", "putting extra: ${recipe.realmID} ")
             intent.putExtra("rid", recipe.realmID)
+            intent.putExtra("direction", true)
             itemView.context.startActivity(intent)
         }
     }

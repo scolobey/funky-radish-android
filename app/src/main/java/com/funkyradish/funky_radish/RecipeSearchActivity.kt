@@ -119,6 +119,7 @@ class RecipeSearchActivity : AppCompatActivity() {
                     //TODO: why is this inside the realm transaction?
                     val intent = Intent(this, RecipeViewActivity::class.java)
                     intent.putExtra("rid", newRecipe.realmID)
+                    intent.putExtra("direction", true)
                     startActivity(intent)
                 }
             }
