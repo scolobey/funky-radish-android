@@ -112,8 +112,6 @@ class RecipeViewActivity : AppCompatActivity() {
 
             val dirs = recipe.directions
 
-            Log.d("API", "Directions: ${recipe.directions}")
-
             for (i in 0 until dirs!!.size) {
                 contentString.append(dirs!![i]!!.text).append("\n")
             }

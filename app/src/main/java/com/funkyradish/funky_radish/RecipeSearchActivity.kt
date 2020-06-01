@@ -233,10 +233,9 @@ class RecipeSearchActivity : AppCompatActivity() {
 
                 builder.setPositiveButton("YES"){dialog, which ->
 
-                    realm.close()
-
                     Log.d("API", "User: ${SyncUser.current()}.")
                     SyncUser.current().logOut()
+                    realm.close()
 
                     setToken(this.getApplicationContext(), "")
                     setUsername(this.getApplicationContext(), "")

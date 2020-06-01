@@ -3,12 +3,18 @@ package com.funkyradish.funky_radish
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.ProgressBar
 import com.android.volley.toolbox.Volley
+import io.realm.Realm
+import io.realm.RealmList
 import kotlinx.android.synthetic.main.activity_recipe_search.*
+import java.util.Arrays.asList
+
+
 
 class SignupActivity : AppCompatActivity() {
 
@@ -38,8 +44,6 @@ class SignupActivity : AppCompatActivity() {
             try {
                 val queue = Volley.newRequestQueue(this)
 
-                // TODO: Check for existing recipes or account.
-
                 createUser(this, queue, username, email, password) { success: Boolean ->
                     if (success) {
                         this@SignupActivity.runOnUiThread(java.lang.Runnable {
@@ -51,8 +55,8 @@ class SignupActivity : AppCompatActivity() {
                             progressBar.visibility = View.INVISIBLE
                         })
                     }
-
                 }
+
             } catch (e: InterruptedException) {
                 Log.d("API", "Some kinda error.")
                 e.printStackTrace()

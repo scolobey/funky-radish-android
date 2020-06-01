@@ -15,6 +15,7 @@ import org.json.JSONObject
 import java.util.*
 import com.funkyradish.funky_radish.Constants.AUTH_URL
 import io.realm.SyncUser
+import io.realm.kotlin.createObject
 
 //val ENDPOINT = "https://funky-radish-api.herokuapp.com/users"
 //val ENDPOINT2 = "https://funky-radish-api.herokuapp.com/authenticate"
@@ -206,12 +207,24 @@ fun createRealmUser(token: String, callback: (success: Boolean) -> Unit, activit
         override fun onSuccess(user: SyncUser) {
             Log.d("API", "Realm access successful: Realm User: ${user}")
 
+            val realm = Realm.getDefaultInstance()
+            var recipes = realm.where(Recipe::class.java).findAll()
+
+            var recipeList = RealmList<Recipe?>()
+            recipeList.addAll(recipes)
+
             val url = Constants.REALM_URL
             val synchConfiguration = user.createConfiguration(url)
                     .fullSynchronization()
                     .build()
 
             Realm.setDefaultConfiguration(synchConfiguration)
+
+            Log.d("API", "Inserting recipes: ${recipeList}")
+
+            if (recipeList.count() > 0) {
+                bulkInsertRecipes(recipeList)
+            }
 
             callback(true)
         }
@@ -234,6 +247,47 @@ fun createRealmUser(token: String, callback: (success: Boolean) -> Unit, activit
     }
 
     SyncUser.logInAsync(credentials, AUTH_URL, callback2)
+}
+
+fun bulkInsertRecipes(recipeList: RealmList<Recipe?>) {
+    if (recipeList.count() > 0) {
+
+        val realm = Realm.getDefaultInstance()
+
+        realm.executeTransaction { _ ->
+            try {
+
+                for (i in recipeList) {
+                    Log.d("API", "Inserting recipe: ${i}")
+                    var recipe = realm.createObject<Recipe>(UUID.randomUUID().toString())
+                    recipe.title = i!!.title
+
+                    if (i.directions.count() > 0) {
+                        for (j in i.directions) {
+                            Log.d("API", "Inserting direction: ${j}")
+                            val dir = realm.createObject<Direction>(UUID.randomUUID().toString())
+                            dir.text = j.text
+                            recipe.directions.add(dir)
+                        }
+                    }
+
+                    if (i.ingredients.count() > 0) {
+                        for (k in i.ingredients) {
+                            Log.d("API", "Inserting ingredient: ${k}")
+                            val ing = realm.createObject<Ingredient>(UUID.randomUUID().toString())
+                            ing.name = k.name
+                            recipe.ingredients.add(ing)
+                        }
+                    }
+
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+    }
 }
 
 class UserResponse(val message: String, val token: String, val userData: User)
