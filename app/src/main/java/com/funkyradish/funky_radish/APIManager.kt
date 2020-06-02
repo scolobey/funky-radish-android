@@ -3,7 +3,6 @@ package com.funkyradish.funky_radish
 import android.app.Activity
 import android.content.Context
 import android.net.ConnectivityManager
-import android.net.NetworkInfo
 import android.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
@@ -16,16 +15,13 @@ import java.util.*
 import com.funkyradish.funky_radish.Constants.AUTH_URL
 import io.realm.SyncUser
 import io.realm.kotlin.createObject
+import io.realm.kotlin.syncSession
 
 //val ENDPOINT = "https://funky-radish-api.herokuapp.com/users"
 //val ENDPOINT2 = "https://funky-radish-api.herokuapp.com/authenticate"
-val ENDPOINT3 = "https://funky-radish-api.herokuapp.com/recipes"
-val ENDPOINT4 = "https://funky-radish-api.herokuapp.com/updateRecipes"
 
 val ENDPOINT = "http://10.0.2.2:8080/users"
 val ENDPOINT2 = "http://10.0.2.2:8080/authenticate"
-//val ENDPOINT3 = "http://10.0.2.2:8080/recipes"
-//val ENDPOINT4 = "hhttp://10.0.2.2:8080/updateRecipes"
 
 val FR_TOKEN = "fr_token"
 val FR_USERNAME = "fr_username"
@@ -56,11 +52,6 @@ fun setUserEmail(context: Context, userEmail: String) {
     editor.apply()
 }
 
-fun getUsername(context: Context): String {
-    val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-    return preferences.getString(FR_USERNAME, "")
-}
-
 fun setUsername(context: Context, username: String) {
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
     val editor = preferences.edit()
@@ -87,15 +78,10 @@ fun isConnected(context: Context): Boolean {
     return networkInfo != null && networkInfo.isConnected
 }
 
-//fun isConnectedToInternet(context: Context): Boolean {
-//    val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-//    val activeNetwork: NetworkInfo? = cm.activeNetworkInfo
-//
-//    val isConnected: Boolean = activeNetwork?.isConnected == false
-//    return isConnected
-//}
+fun createUser(activity: Activity, queue: RequestQueue, username: String, email: String, password: String, importRecipes: RealmList<Recipe?>, callback: (success: Boolean) -> Unit) {
+    
+    Log.d("API", "rec to add: ${importRecipes.toString()}")
 
-fun createUser(activity: Activity, queue: RequestQueue, username: String, email: String, password: String, callback: (success: Boolean) -> Unit) {
 
     // Structure user data
     val json = JSONObject().apply({
@@ -116,9 +102,13 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
                 setUsername(activity.applicationContext, userResponse.userData.name)
                 setUserEmail(activity.applicationContext, userResponse.userData.email)
 
-                createRealmUser(userResponse.token, callback, activity)
+                Log.d("API", "token: ${userResponse.token}")
+
+                createRealmUser(userResponse.token, importRecipes, callback, activity)
             },
             Response.ErrorListener { error ->
+
+                Log.d("API", "error on createUser")
 
                 Toast.makeText(
                         activity.applicationContext,
@@ -169,9 +159,8 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
 
                 Log.d("API", "Token stored: ${token}")
 
-                createRealmUser(token, callback, activity)
-
-//                callback()
+                var recipeList = RealmList<Recipe?>()
+                createRealmUser(token, recipeList, callback, activity)
             },
             Response.ErrorListener { error ->
                 Log.d("API", "error ${error.toString()}:")
@@ -198,20 +187,16 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
     queue.add(tokenRequest)
 }
 
-fun createRealmUser(token: String, callback: (success: Boolean) -> Unit, activity: Activity) {
-    Log.d("API", "Realm User: ${token}")
+fun createRealmUser(token: String, recipeList: RealmList<Recipe?>, callback: (success: Boolean) -> Unit, activity: Activity) {
 
     var credentials = SyncCredentials.jwt(token)
 
+    Log.d("API", "Gonna try and execute jwt synch.")
+
     val callback2 = object : SyncUser.Callback<SyncUser> {
+
         override fun onSuccess(user: SyncUser) {
             Log.d("API", "Realm access successful: Realm User: ${user}")
-
-            val realm = Realm.getDefaultInstance()
-            var recipes = realm.where(Recipe::class.java).findAll()
-
-            var recipeList = RealmList<Recipe?>()
-            recipeList.addAll(recipes)
 
             val url = Constants.REALM_URL
             val synchConfiguration = user.createConfiguration(url)
@@ -230,7 +215,7 @@ fun createRealmUser(token: String, callback: (success: Boolean) -> Unit, activit
         }
 
         override fun onError(error: ObjectServerError) {
-            Log.d("API", "Realm connectionfailed")
+            Log.d("API", "Realm connection failed")
 
             val errorMsg: String = when (error.errorCode) {
                 ErrorCode.UNKNOWN_ACCOUNT -> "unknown account"
@@ -242,6 +227,8 @@ fun createRealmUser(token: String, callback: (success: Boolean) -> Unit, activit
                     errorMsg,
                     Toast.LENGTH_SHORT).show()
 
+            Log.d("API", "error: ${errorMsg}")
+
             callback(false)
         }
     }
@@ -251,6 +238,8 @@ fun createRealmUser(token: String, callback: (success: Boolean) -> Unit, activit
 
 fun bulkInsertRecipes(recipeList: RealmList<Recipe?>) {
     if (recipeList.count() > 0) {
+
+        Log.d("API", "bulk insert called")
 
         val realm = Realm.getDefaultInstance()
 

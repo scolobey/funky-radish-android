@@ -11,10 +11,8 @@ import android.widget.ProgressBar
 import com.android.volley.toolbox.Volley
 import io.realm.Realm
 import io.realm.RealmList
+import io.realm.SyncUser
 import kotlinx.android.synthetic.main.activity_recipe_search.*
-import java.util.Arrays.asList
-
-
 
 class SignupActivity : AppCompatActivity() {
 
@@ -25,13 +23,47 @@ class SignupActivity : AppCompatActivity() {
 
     /** Called when the user taps the Send button */
     fun sendMessage(view: View) {
-        val username = findViewById<EditText>(R.id.editText).text.toString()
-        val email = findViewById<EditText>(R.id.editText2).text.toString()
-        val password = findViewById<EditText>(R.id.editText3).text.toString()
 
         if(isOffline(this.applicationContext)) {
             toggleOfflineMode(this.applicationContext)
         }
+
+//        var user = SyncUser.current()
+//        TODO: Might need to check if theres a user and then message to logout first.
+
+        val realm = Realm.getDefaultInstance()
+        var recipes = realm.where(Recipe::class.java).findAll()
+        var recipeList = RealmList<Recipe?>()
+        realm.close()
+
+        if (recipes.count() > 0) {
+
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Migrate recipes?")
+            builder.setMessage("There are recipes on this device. Would you like to move them to your new account?")
+
+            builder.setPositiveButton("yes") { dialog, which ->
+                recipeList.addAll(recipes)
+                launchSignup(recipeList, view)
+            }
+            builder.setNegativeButton("cancel") { dialog, which ->
+                val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
+                startActivity(intent)
+            }
+            builder.setNeutralButton("no") { dialog, which ->
+                launchSignup(recipeList, view)
+            }
+
+            builder.show()
+        }
+
+
+    }
+
+    fun launchSignup(recipeList: RealmList<Recipe?>, view: View) {
+        val username = findViewById<EditText>(R.id.editText).text.toString()
+        val email = findViewById<EditText>(R.id.editText2).text.toString()
+        val password = findViewById<EditText>(R.id.editText3).text.toString()
 
         val progressBar: ProgressBar = this.recipeListSpinner
 
@@ -40,11 +72,11 @@ class SignupActivity : AppCompatActivity() {
                 progressBar.visibility = View.VISIBLE
             })
 
-            // create user
+
             try {
                 val queue = Volley.newRequestQueue(this)
 
-                createUser(this, queue, username, email, password) { success: Boolean ->
+                createUser(this, queue, username, email, password, recipeList) { success: Boolean ->
                     if (success) {
                         this@SignupActivity.runOnUiThread(java.lang.Runnable {
                             val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
@@ -61,8 +93,11 @@ class SignupActivity : AppCompatActivity() {
                 Log.d("API", "Some kinda error.")
                 e.printStackTrace()
             }
+
         }).start()
+
     }
+
 
     fun loginSegue(view: View) {
         val intent = Intent(this, LoginActivity::class.java).apply {}
