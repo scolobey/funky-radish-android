@@ -78,8 +78,8 @@ fun isConnected(context: Context): Boolean {
     return networkInfo != null && networkInfo.isConnected
 }
 
-fun createUser(activity: Activity, queue: RequestQueue, username: String, email: String, password: String, importRecipes: RealmList<Recipe?>, callback: (success: Boolean) -> Unit) {
-    
+fun createUser(activity: Activity, queue: RequestQueue, username: String, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
+
     Log.d("API", "rec to add: ${importRecipes.toString()}")
 
 
@@ -187,7 +187,7 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
     queue.add(tokenRequest)
 }
 
-fun createRealmUser(token: String, recipeList: RealmList<Recipe?>, callback: (success: Boolean) -> Unit, activity: Activity) {
+fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success: Boolean) -> Unit, activity: Activity) {
 
     var credentials = SyncCredentials.jwt(token)
 
@@ -236,7 +236,7 @@ fun createRealmUser(token: String, recipeList: RealmList<Recipe?>, callback: (su
     SyncUser.logInAsync(credentials, AUTH_URL, callback2)
 }
 
-fun bulkInsertRecipes(recipeList: RealmList<Recipe?>) {
+fun bulkInsertRecipes(recipeList: List<Recipe?>) {
     if (recipeList.count() > 0) {
 
         Log.d("API", "bulk insert called")

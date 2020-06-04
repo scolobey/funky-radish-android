@@ -10,8 +10,6 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import com.android.volley.toolbox.Volley
 import io.realm.Realm
-import io.realm.RealmList
-import io.realm.SyncUser
 import kotlinx.android.synthetic.main.activity_recipe_search.*
 
 class SignupActivity : AppCompatActivity() {
@@ -28,29 +26,44 @@ class SignupActivity : AppCompatActivity() {
             toggleOfflineMode(this.applicationContext)
         }
 
-//        var user = SyncUser.current()
-//        TODO: Might need to check if theres a user and then message to logout first.
+//        TODO: Might need to check if there's already a user and then message to logout first.
 
         val realm = Realm.getDefaultInstance()
         var recipes = realm.where(Recipe::class.java).findAll()
-        var recipeList = RealmList<Recipe?>()
+        var recipeList = realm.copyFromRealm(recipes)
+        
         realm.close()
 
         if (recipes.count() > 0) {
 
             val builder = AlertDialog.Builder(this)
-            builder.setTitle("Migrate recipes?")
-            builder.setMessage("There are recipes on this device. Would you like to move them to your new account?")
+            builder.setTitle("Transfer recipes?")
+            builder.setMessage("There are ${recipeList.count()} recipes on this device. Should we move them to your new account?")
 
             builder.setPositiveButton("yes") { dialog, which ->
-                recipeList.addAll(recipes)
+
+                val realm2 = Realm.getDefaultInstance()
+                realm2.executeTransaction { _ ->
+                    try {
+                        recipes.deleteAllFromRealm()
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                realm.close()
+
+                Log.d("API", "migrating: ${recipeList}")
                 launchSignup(recipeList, view)
             }
             builder.setNegativeButton("cancel") { dialog, which ->
+                Log.d("API", "canceling signup.")
                 val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
                 startActivity(intent)
             }
             builder.setNeutralButton("no") { dialog, which ->
+                recipeList.clear()
+                Log.d("API", "Emptying recipe list.")
                 launchSignup(recipeList, view)
             }
 
@@ -60,7 +73,7 @@ class SignupActivity : AppCompatActivity() {
 
     }
 
-    fun launchSignup(recipeList: RealmList<Recipe?>, view: View) {
+    fun launchSignup(recipeList: List<Recipe?>, view: View) {
         val username = findViewById<EditText>(R.id.editText).text.toString()
         val email = findViewById<EditText>(R.id.editText2).text.toString()
         val password = findViewById<EditText>(R.id.editText3).text.toString()

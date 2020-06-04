@@ -104,29 +104,20 @@ class RecipeViewActivity : AppCompatActivity() {
     private fun prepareRecipeView() {
 
         val directionView = intent.extras.getBoolean("direction")
-        val contentString = StringBuilder()
 
         if(directionView) {
             recipeViewTitle.text = "Directions"
 
-            val dirs = recipe.directions
-
-            for (i in 0 until dirs!!.size) {
-                contentString.append(dirs!![i]!!.text).append("\n")
-            }
+            val finalContentString = buildContentString(true)
+            recipeViewContent.setText(finalContentString)
         }
         else {
             recipeViewTitle.text = "Ingredients"
 
-            val ings = recipe.ingredients
-
-            for (i in 0 until ings!!.size) {
-                contentString.append(ings!![i]!!.name).append("\n")
-            }
+            val finalContentString = buildContentString(false)
+            recipeViewContent.setText(finalContentString)
         }
 
-        val finalContentString = contentString.toString()
-        recipeViewContent.setText(finalContentString)
     }
 
     private fun prepareTrashButton() {
@@ -185,6 +176,27 @@ class RecipeViewActivity : AppCompatActivity() {
         saveRecipe(recipe.title)
         finish()
         return true
+    }
+
+    private fun buildContentString(isDirectionView: Boolean): String{
+        val contentString = StringBuilder()
+
+        if(isDirectionView) {
+            val dirs = recipe.directions
+
+            for (i in 0 until dirs!!.size) {
+                contentString.append(dirs!![i]!!.text).append("\n")
+            }
+        }
+        else {
+            val ings = recipe.ingredients
+
+            for (i in 0 until ings!!.size) {
+                contentString.append(ings!![i]!!.name).append("\n")
+            }
+        }
+
+        return contentString.toString()
     }
 
     private fun Activity.hideKeyboard() {
