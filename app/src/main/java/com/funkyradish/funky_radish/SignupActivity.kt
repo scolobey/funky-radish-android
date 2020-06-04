@@ -11,12 +11,20 @@ import android.widget.ProgressBar
 import com.android.volley.toolbox.Volley
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_search.*
+import android.view.inputmethod.EditorInfo
 
 class SignupActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_signup)
+
+        // enable submit from keypad
+        val edit_pwd = findViewById(R.id.editText3) as EditText
+
+        edit_pwd.onSubmit {
+            sendMessage(view = findViewById(android.R.id.content))
+        }
     }
 
     /** Called when the user taps the Send button */
@@ -26,8 +34,7 @@ class SignupActivity : AppCompatActivity() {
             toggleOfflineMode(this.applicationContext)
         }
 
-//        TODO: Might need to check if there's already a user and then message to logout first.
-
+//      TODO: Might need to check if there's already a user and then message to logout first.
         val realm = Realm.getDefaultInstance()
         var recipes = realm.where(Recipe::class.java).findAll()
         var recipeList = realm.copyFromRealm(recipes)
@@ -36,9 +43,14 @@ class SignupActivity : AppCompatActivity() {
 
         if (recipes.count() > 0) {
 
+            var plural = "recipes"
+            if (recipeList.count() < 2) {
+                plural = "recipe"
+            }
+
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Transfer recipes?")
-            builder.setMessage("There are ${recipeList.count()} recipes on this device. Should we move them to your new account?")
+            builder.setMessage("Detected ${recipeList.count()} ${plural} on this device. Should we copy this data to your new account?")
 
             builder.setPositiveButton("yes") { dialog, which ->
 
@@ -51,7 +63,7 @@ class SignupActivity : AppCompatActivity() {
                         e.printStackTrace()
                     }
                 }
-                realm.close()
+                realm2.close()
 
                 Log.d("API", "migrating: ${recipeList}")
                 launchSignup(recipeList, view)
@@ -69,8 +81,6 @@ class SignupActivity : AppCompatActivity() {
 
             builder.show()
         }
-
-
     }
 
     fun launchSignup(recipeList: List<Recipe?>, view: View) {
@@ -116,5 +126,17 @@ class SignupActivity : AppCompatActivity() {
         val intent = Intent(this, LoginActivity::class.java).apply {}
         startActivity(intent)
     }
+
+    // Trigger for the done button on the keyboard
+    fun EditText.onSubmit(func: () -> Unit) {
+        setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                func()
+            }
+            true
+        }
+    }
 }
+
+
 
