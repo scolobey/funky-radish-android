@@ -3,11 +3,14 @@ package com.funkyradish.funky_radish
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.ProgressBar
 import com.android.volley.toolbox.Volley
+import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_search.*
 
 class LoginActivity : AppCompatActivity() {
@@ -15,15 +18,63 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+
+        // enable submit from keypad
+        val edit_pwd = findViewById(R.id.loginPasswordField) as EditText
+
+        edit_pwd.onSubmit {
+            loginButton(view = findViewById(android.R.id.content))
+        }
     }
 
     fun loginButton(view: View) {
-        val email = findViewById<EditText>(R.id.loginEmailField).text.toString()
-        val password = findViewById<EditText>(R.id.loginPasswordField).text.toString()
 
         if(isOffline(this.applicationContext)) {
             toggleOfflineMode(this.applicationContext)
         }
+
+//      TODO: Might need to check if there's already a user and then message to logout first.
+        val realm = Realm.getDefaultInstance()
+        var recipes = realm.where(Recipe::class.java).findAll()
+        var recipeList = realm.copyFromRealm(recipes)
+        realm.close()
+
+        if (recipes.count() > 0) {
+            var plural = "recipes"
+            if (recipeList.count() < 2) {
+                plural = "recipe"
+            }
+
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Transfer recipes?")
+            builder.setMessage("Detected ${recipeList.count()} ${plural} on this device. Should we copy this data to your new account?")
+
+            builder.setPositiveButton("yes") { dialog, which ->
+                Log.d("API", "migrating: ${recipeList}")
+                launchLogin(recipeList, view)
+            }
+            builder.setNegativeButton("cancel") { dialog, which ->
+                Log.d("API", "canceling signup.")
+                val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
+                startActivity(intent)
+            }
+            builder.setNeutralButton("no") { dialog, which ->
+                recipeList.clear()
+                Log.d("API", "Emptying recipe list.")
+                launchLogin(recipeList, view)
+            }
+
+            builder.show()
+        }
+        else {
+            recipeList.clear()
+            launchLogin(recipeList, view)
+        }
+    }
+
+    fun launchLogin(recipeList: List<Recipe?>, view: View) {
+        val email = findViewById<EditText>(R.id.loginEmailField).text.toString()
+        val password = findViewById<EditText>(R.id.loginPasswordField).text.toString()
 
         val progressSpinner: ProgressBar = this.recipeListSpinner
 
@@ -36,15 +87,9 @@ class LoginActivity : AppCompatActivity() {
 
             // login
             try {
-                Log.d("API", "Calling for a token.")
                 val queue = Volley.newRequestQueue(this)
 
-                downloadToken(this, queue, email, password) {
-                    Log.d("API", "Executing login callback")
-
-//                  This was causing a crash on login.
-//                  toolbar.menu.removeGroup(2)
-
+                downloadToken(this, queue, email, password, recipeList) {
                     this@LoginActivity.runOnUiThread(java.lang.Runnable {
                         Log.d("API", "Redirecting to main view.")
 
@@ -65,5 +110,15 @@ class LoginActivity : AppCompatActivity() {
         val intent = Intent(this, SignupActivity::class.java).apply {
         }
         startActivity(intent)
+    }
+
+    // Trigger for the done button on the keyboard
+    fun EditText.onSubmit(func: () -> Unit) {
+        setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                func()
+            }
+            true
+        }
     }
 }

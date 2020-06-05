@@ -58,6 +58,8 @@ class RecipeSearchActivity : AppCompatActivity() {
 
         // If offline mode is toggled on, don't try to download recipes.
         if(!isOffline(this.applicationContext)) {
+
+            //TODO: check if user is synched.
             Log.d("API", "Network access approved. Looking for a token.")
 
             var token = getToken(this.getApplicationContext())
@@ -89,6 +91,8 @@ class RecipeSearchActivity : AppCompatActivity() {
             }
             else {
                 Log.d("API", "Did not find a token.")
+
+                // if you're  intentionally in offline mode, don't do this.
                 showAuthorizationDialog()
             }
         }
@@ -218,6 +222,7 @@ class RecipeSearchActivity : AppCompatActivity() {
         when (item.itemId) {
             // Login
             3 -> {
+                Log.d("API", "Login segue launching.")
                 val intent = Intent(this, LoginActivity::class.java).apply {
                 }
                 startActivity(intent)

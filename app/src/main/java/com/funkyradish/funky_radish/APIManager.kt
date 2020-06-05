@@ -139,7 +139,7 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
 
 }
 
-fun downloadToken(activity: Activity, queue: RequestQueue, email: String, password: String, callback: (success: Boolean) -> Unit) {
+fun downloadToken(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
     Log.d("API", "Requesting authorization token.")
 
     // Prepare a space for your token in preferences.
@@ -149,18 +149,29 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
     val tokenRequest = object : StringRequest(Method.POST, ENDPOINT2,
             Response.Listener { response ->
                 val body = response.toString()
+
                 val gson = GsonBuilder().create()
                 val userResponse = gson.fromJson(body, TokenResponse::class.java)
 
-                val token = userResponse.token
-                val editor = preferences.edit()
-                editor.putString(FR_TOKEN, token)
-                editor.apply()
+                if (userResponse.success) {
+                    setUserEmail(activity.applicationContext, email)
+                    val token = userResponse.token
+                    val editor = preferences.edit()
+                    editor.putString(FR_TOKEN, token)
+                    editor.apply()
 
-                Log.d("API", "Token stored: ${token}")
+                    Log.d("API", "Token stored: ${token}")
 
-                var recipeList = RealmList<Recipe?>()
-                createRealmUser(token, recipeList, callback, activity)
+                    createRealmUser(token, importRecipes, callback, activity)
+                }
+                else {
+                    Toast.makeText(
+                            activity.applicationContext,
+                            "User not found.",
+                            Toast.LENGTH_SHORT).show()
+                    callback(false)
+                }
+
             },
             Response.ErrorListener { error ->
                 Log.d("API", "error ${error.toString()}:")
@@ -197,6 +208,19 @@ fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success
 
         override fun onSuccess(user: SyncUser) {
             Log.d("API", "Realm access successful: Realm User: ${user}")
+
+            //remove recipes from the old
+            val realm = Realm.getDefaultInstance()
+            var recipes = realm.where(Recipe::class.java).findAll()
+            realm.executeTransaction { _ ->
+                try {
+                    recipes.deleteAllFromRealm()
+
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            realm.close()
 
             val url = Constants.REALM_URL
             val synchConfiguration = user.createConfiguration(url)
