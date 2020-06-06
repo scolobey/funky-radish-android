@@ -29,6 +29,10 @@ class LoginActivity : AppCompatActivity() {
 
     fun loginButton(view: View) {
 
+        //Validation
+        //Does the email have proper formatting?
+        //Does the username have proper formatting?
+
         if(isOffline(this.applicationContext)) {
             toggleOfflineMode(this.applicationContext)
         }

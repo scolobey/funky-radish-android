@@ -29,7 +29,6 @@ class SignupActivity : AppCompatActivity() {
 
     /** Called when the user taps the Send button */
     fun sendMessage(view: View) {
-
         if(isOffline(this.applicationContext)) {
             toggleOfflineMode(this.applicationContext)
         }
@@ -42,7 +41,6 @@ class SignupActivity : AppCompatActivity() {
         realm.close()
 
         if (recipes.count() > 0) {
-
             var plural = "recipes"
             if (recipeList.count() < 2) {
                 plural = "recipe"
@@ -80,6 +78,9 @@ class SignupActivity : AppCompatActivity() {
             }
 
             builder.show()
+        }
+        else {
+            launchSignup(recipeList, view)
         }
     }
 

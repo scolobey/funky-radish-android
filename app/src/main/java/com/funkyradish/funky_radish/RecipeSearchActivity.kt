@@ -28,8 +28,6 @@ class RecipeSearchActivity : AppCompatActivity() {
 
         realm = Realm.getDefaultInstance()
 
-        Log.d("API", realm.toString())
-
         setContentView(R.layout.activity_recipe_search)
         setSupportActionBar(findViewById(R.id.toolbar))
         prepareCreateRecipeButton()

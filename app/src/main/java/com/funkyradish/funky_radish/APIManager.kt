@@ -15,7 +15,7 @@ import java.util.*
 import com.funkyradish.funky_radish.Constants.AUTH_URL
 import io.realm.SyncUser
 import io.realm.kotlin.createObject
-import io.realm.kotlin.syncSession
+import org.json.JSONException
 
 //val ENDPOINT = "https://funky-radish-api.herokuapp.com/users"
 //val ENDPOINT2 = "https://funky-radish-api.herokuapp.com/authenticate"
@@ -80,9 +80,6 @@ fun isConnected(context: Context): Boolean {
 
 fun createUser(activity: Activity, queue: RequestQueue, username: String, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
 
-    Log.d("API", "rec to add: ${importRecipes.toString()}")
-
-
     // Structure user data
     val json = JSONObject().apply({
         put("name", username)
@@ -108,11 +105,27 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
             },
             Response.ErrorListener { error ->
 
-                Log.d("API", "error on createUser")
+                Log.d("API", "error on createUser: ${error.message}")
+                error.printStackTrace()
+
+                var errorMessage = error.toString()
+
+                val response = error.networkResponse
+                if (error is ServerError && response != null) {
+                    try {
+                        val json = String(response.data)
+                        val userErrorResponse = GsonBuilder().create().fromJson(json, UserErrorResponse::class.java)
+                        Log.d("API", "error parsed: ${userErrorResponse}")
+                        errorMessage = userErrorResponse.message
+                    } catch (e2: JSONException) {
+                        // returned data is not JSONObject?
+                        e2.printStackTrace()
+                    }
+                }
 
                 Toast.makeText(
                         activity.applicationContext,
-                        error.toString(),
+                        errorMessage,
                         Toast.LENGTH_SHORT).show()
 
                 callback(false)
@@ -302,6 +315,8 @@ fun bulkInsertRecipes(recipeList: List<Recipe?>) {
 
     }
 }
+
+class UserErrorResponse(val message: String, val name: String)
 
 class UserResponse(val message: String, val token: String, val userData: User)
 
