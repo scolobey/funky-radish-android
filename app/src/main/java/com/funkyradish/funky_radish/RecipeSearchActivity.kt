@@ -4,7 +4,6 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.content.Intent
-import android.support.v4.content.ContextCompat
 import android.support.v7.widget.LinearLayoutManager
 import android.view.*
 import kotlinx.android.synthetic.main.activity_recipe_search.*
@@ -17,7 +16,7 @@ import android.widget.Toast
 import com.android.volley.toolbox.Volley
 import io.realm.*
 import java.util.*
-
+import io.realm.SyncUser
 
 class RecipeSearchActivity : AppCompatActivity() {
     private lateinit var realm: Realm
@@ -42,38 +41,38 @@ class RecipeSearchActivity : AppCompatActivity() {
         var listener = RealmChangeListener<RealmResults<Recipe>>({
             prepareRecipeListView(filteredRecipes)
         })
-
         recipes.addChangeListener(listener)
 
-        Log.d("API", "Beginning recipe loader.")
-
-        if (isConnectedToInternet(this.applicationContext)) {
-            toggleOfflineMode(this.applicationContext)
-        }
+//        if (isConnected(this.applicationContext)) {
+//            // TODO: Should probably check if the user really wants to connect. What if offline is off and internet is connected?
+//            Log.d("API", "Internet is connected it seems. toggling offline mode. is Offline labeled below.")
+//            var state = isOffline(this)
+//            Log.d("API", state.toString())
+//            toggleOfflineMode(this.applicationContext)
+//            state = isOffline(this)
+//            Log.d("API", "offline toggled. is offline labeled below.")
+//            Log.d("API", state.toString())
+//        }
 
         // If offline mode is toggled on, don't try to download recipes.
         if(!isOffline(this.applicationContext)) {
-            Log.d("API", "Application is in online mode.")
+
+            //TODO: check if user is synched.
+            Log.d("API", "Network access approved. Looking for a token.")
+
             var token = getToken(this.getApplicationContext())
 
-            Log.d("API", "Looking for a token.")
-
             if (token.length > 0) {
-
-                Log.d("API", "Found a token.")
-
+                Log.d("API", "Token found.")
                 val progressBar: ProgressBar = this.recipeListSpinner
 
                 Thread(Runnable {
                     this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
-                        Log.d("API", "Starting loader.")
                         progressBar.visibility = View.VISIBLE
                     })
 
-                    // create user
                     try {
                         val queue = Volley.newRequestQueue(this)
-                        loadRecipes(this, queue, token)
                     } catch (e: InterruptedException) {
                         e.printStackTrace()
                         val intent = Intent(this, LoginActivity::class.java)
@@ -90,11 +89,13 @@ class RecipeSearchActivity : AppCompatActivity() {
             }
             else {
                 Log.d("API", "Did not find a token.")
+
+                // if you're  intentionally in offline mode, don't do this.
                 showAuthorizationDialog()
             }
         }
         else {
-            Log.d("API", "Application is offline.")
+            Toast.makeText(applicationContext,"Synchronization disabled.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -120,6 +121,7 @@ class RecipeSearchActivity : AppCompatActivity() {
                     //TODO: why is this inside the realm transaction?
                     val intent = Intent(this, RecipeViewActivity::class.java)
                     intent.putExtra("rid", newRecipe.realmID)
+                    intent.putExtra("direction", true)
                     startActivity(intent)
                 }
             }
@@ -167,9 +169,11 @@ class RecipeSearchActivity : AppCompatActivity() {
         val inflater = menuInflater
 
         var token = getToken(this.getApplicationContext())
+        var userEmail = getUserEmail(this.getApplicationContext())
+
 
         if (token.length > 0) {
-            menu.add(1, 1, 1, token)
+            menu.add(1, 1, 1, userEmail)
             menu.add(1, 2, 1, "Logout")
         } else {
             menu.add(2, 3, 2, "Login")
@@ -216,6 +220,7 @@ class RecipeSearchActivity : AppCompatActivity() {
         when (item.itemId) {
             // Login
             3 -> {
+                Log.d("API", "Login segue launching.")
                 val intent = Intent(this, LoginActivity::class.java).apply {
                 }
                 startActivity(intent)
@@ -227,17 +232,27 @@ class RecipeSearchActivity : AppCompatActivity() {
                 builder.setTitle("This may delete recipes that have not been saved to your online account. Continue?")
 
                 builder.setPositiveButton("YES"){dialog, which ->
-                    setToken(this.getApplicationContext(), "")
 
-                    var recipeModel = RecipeModel()
-                    val realm = Realm.getDefaultInstance()
-                    recipeModel.removeRecipes(realm)
+                    SyncUser.current().logOut()
+                    realm.close()
+
+                    setToken(this.getApplicationContext(), "")
+                    setUsername(this.getApplicationContext(), "")
+                    setUserEmail(this.getApplicationContext(), "")
+
+                    val realmConfiguration = RealmConfiguration.Builder()
+                            .name(Constants.REALM_DB_NAME)
+                            .build()
+
+                    Realm.setDefaultConfiguration(realmConfiguration)
+                    realm = Realm.getDefaultInstance()
+                    recipes = realm.where(Recipe::class.java).findAll()
+
+                    prepareRecipeListView(recipes)
 
                     toolbar.menu.removeGroup(1)
                     toolbar.menu.add(2, 3, 2, "Login")
                     toolbar.menu.add(2, 4, 2, "Signup")
-
-                    prepareRecipeListView(filteredRecipes)
                 }
 
                 builder.setNegativeButton("No"){dialog,which ->

@@ -5,10 +5,9 @@ import io.realm.annotations.PrimaryKey
 import io.realm.annotations.RealmClass
 
 @RealmClass
-open class Ingredient : RealmObject() {
+open class Direction : RealmObject() {
     @PrimaryKey
     open var realmID: String = ""
 
-    open var name: String = ""
+    open var text: String = ""
 }
-
