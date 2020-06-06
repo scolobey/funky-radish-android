@@ -17,58 +17,47 @@ import io.realm.SyncUser
 import io.realm.kotlin.createObject
 import org.json.JSONException
 
-//val ENDPOINT = "https://funky-radish-api.herokuapp.com/users"
-//val ENDPOINT2 = "https://funky-radish-api.herokuapp.com/authenticate"
-
-val ENDPOINT = "http://10.0.2.2:8080/users"
-val ENDPOINT2 = "http://10.0.2.2:8080/authenticate"
-
-val FR_TOKEN = "fr_token"
-val FR_USERNAME = "fr_username"
-val FR_USER_EMAIL = "fr_user_email"
-val OFFLINE = "fr_offline"
-
 fun getToken(context: Context): String {
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-    return preferences.getString(FR_TOKEN, "")
+    return preferences.getString(Constants.FR_TOKEN, "")
 }
 
 fun setToken(context: Context, token: String) {
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
     val editor = preferences.edit()
-    editor.putString(FR_TOKEN, token)
+    editor.putString(Constants.FR_TOKEN, token)
     editor.apply()
 }
 
 fun getUserEmail(context: Context): String {
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-    return preferences.getString(FR_USER_EMAIL, "")
+    return preferences.getString(Constants.FR_USER_EMAIL, "")
 }
 
 fun setUserEmail(context: Context, userEmail: String) {
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
     val editor = preferences.edit()
-    editor.putString(FR_USER_EMAIL, userEmail)
+    editor.putString(Constants.FR_USER_EMAIL, userEmail)
     editor.apply()
 }
 
 fun setUsername(context: Context, username: String) {
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
     val editor = preferences.edit()
-    editor.putString(FR_USERNAME, username)
+    editor.putString(Constants.FR_USERNAME, username)
     editor.apply()
 }
 
 fun isOffline(context: Context): Boolean {
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-    return preferences.getBoolean(OFFLINE, false)
+    return preferences.getBoolean(Constants.OFFLINE, false)
 }
 
 fun toggleOfflineMode(context: Context) {
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-    val offline = preferences.getBoolean(OFFLINE, false)
+    val offline = preferences.getBoolean(Constants.OFFLINE, false)
     val editor = preferences.edit()
-    editor.putBoolean(OFFLINE, !offline)
+    editor.putBoolean(Constants.OFFLINE, !offline)
     editor.apply()
 }
 
@@ -89,7 +78,7 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
     })
 
     // User request
-    val userRequest = object : JsonObjectRequest(Method.POST, ENDPOINT, json,
+    val userRequest = object : JsonObjectRequest(Method.POST, Constants.ENDPOINT, json,
             Response.Listener<JSONObject> { response ->
 
                 val body = response.toString()
@@ -115,10 +104,8 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
                     try {
                         val json = String(response.data)
                         val userErrorResponse = GsonBuilder().create().fromJson(json, UserErrorResponse::class.java)
-                        Log.d("API", "error parsed: ${userErrorResponse}")
                         errorMessage = userErrorResponse.message
                     } catch (e2: JSONException) {
-                        // returned data is not JSONObject?
                         e2.printStackTrace()
                     }
                 }
@@ -140,7 +127,6 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
     }
 
     if(isConnected(activity.applicationContext)) {
-        // Add the request to the Volley queue
         queue.add(userRequest)
     }
     else {
@@ -153,13 +139,10 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
 }
 
 fun downloadToken(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
-    Log.d("API", "Requesting authorization token.")
 
-    // Prepare a space for your token in preferences.
-    val FR_TOKEN = "fr_token"
     val preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
 
-    val tokenRequest = object : StringRequest(Method.POST, ENDPOINT2,
+    val tokenRequest = object : StringRequest(Method.POST, Constants.ENDPOINT2,
             Response.Listener { response ->
                 val body = response.toString()
 
@@ -170,7 +153,7 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
                     setUserEmail(activity.applicationContext, email)
                     val token = userResponse.token
                     val editor = preferences.edit()
-                    editor.putString(FR_TOKEN, token)
+                    editor.putString(Constants.FR_TOKEN, token)
                     editor.apply()
 
                     Log.d("API", "Token stored: ${token}")
@@ -270,27 +253,22 @@ fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success
         }
     }
 
-    SyncUser.logInAsync(credentials, AUTH_URL, callback2)
+    SyncUser.logInAsync(credentials, Constants.AUTH_URL, callback2)
 }
 
 fun bulkInsertRecipes(recipeList: List<Recipe?>) {
     if (recipeList.count() > 0) {
-
-        Log.d("API", "bulk insert called")
-
         val realm = Realm.getDefaultInstance()
 
         realm.executeTransaction { _ ->
             try {
 
                 for (i in recipeList) {
-                    Log.d("API", "Inserting recipe: ${i}")
                     var recipe = realm.createObject<Recipe>(UUID.randomUUID().toString())
                     recipe.title = i!!.title
 
                     if (i.directions.count() > 0) {
                         for (j in i.directions) {
-                            Log.d("API", "Inserting direction: ${j}")
                             val dir = realm.createObject<Direction>(UUID.randomUUID().toString())
                             dir.text = j.text
                             recipe.directions.add(dir)
@@ -299,7 +277,6 @@ fun bulkInsertRecipes(recipeList: List<Recipe?>) {
 
                     if (i.ingredients.count() > 0) {
                         for (k in i.ingredients) {
-                            Log.d("API", "Inserting ingredient: ${k}")
                             val ing = realm.createObject<Ingredient>(UUID.randomUUID().toString())
                             ing.name = k.name
                             recipe.ingredients.add(ing)
