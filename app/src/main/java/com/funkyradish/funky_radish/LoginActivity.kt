@@ -1,5 +1,7 @@
 package com.funkyradish.funky_radish
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -7,8 +9,10 @@ import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ProgressBar
+import android.widget.Toast
 import com.android.volley.toolbox.Volley
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_search.*
@@ -29,13 +33,11 @@ class LoginActivity : AppCompatActivity() {
 
     fun loginButton(view: View) {
 
-        //Validation
-        //Does the email have proper formatting?
-        //Does the username have proper formatting?
-
         if(isOffline(this.applicationContext)) {
             toggleOfflineMode(this.applicationContext)
         }
+
+        this.hideKeyboard(view)
 
 //      TODO: Might need to check if there's already a user and then message to logout first.
         val realm = Realm.getDefaultInstance()
@@ -79,6 +81,17 @@ class LoginActivity : AppCompatActivity() {
     fun launchLogin(recipeList: List<Recipe?>, view: View) {
         val email = findViewById<EditText>(R.id.loginEmailField).text.toString()
         val password = findViewById<EditText>(R.id.loginPasswordField).text.toString()
+
+        try {
+            var validation = Validation()
+
+            validation.isValidEmail(email)
+            validation.isValidPW(password)
+        }
+        catch (error: Error) {
+            Toast.makeText(applicationContext,"${error.message}", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         val progressSpinner: ProgressBar = this.recipeListSpinner
 
@@ -124,5 +137,10 @@ class LoginActivity : AppCompatActivity() {
             }
             true
         }
+    }
+
+    private fun Context.hideKeyboard(view: View) {
+        val inputMethodManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
     }
 }

@@ -1,5 +1,7 @@
 package com.funkyradish.funky_radish
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -12,6 +14,8 @@ import com.android.volley.toolbox.Volley
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_search.*
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 
 class SignupActivity : AppCompatActivity() {
 
@@ -32,6 +36,8 @@ class SignupActivity : AppCompatActivity() {
         if(isOffline(this.applicationContext)) {
             toggleOfflineMode(this.applicationContext)
         }
+
+        this.hideKeyboard(view)
 
 //      TODO: Might need to check if there's already a user and then message to logout first.
         val realm = Realm.getDefaultInstance()
@@ -89,13 +95,24 @@ class SignupActivity : AppCompatActivity() {
         val email = findViewById<EditText>(R.id.editText2).text.toString()
         val password = findViewById<EditText>(R.id.editText3).text.toString()
 
+        try {
+            var validation = Validation()
+
+            validation.isValidUsername(username)
+            validation.isValidEmail(email)
+            validation.isValidPW(password)
+        }
+        catch (error: Error) {
+            Toast.makeText(applicationContext,"${error.message}", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val progressBar: ProgressBar = this.recipeListSpinner
 
         Thread(Runnable {
             this@SignupActivity.runOnUiThread(java.lang.Runnable {
                 progressBar.visibility = View.VISIBLE
             })
-
 
             try {
                 val queue = Volley.newRequestQueue(this)
@@ -136,6 +153,11 @@ class SignupActivity : AppCompatActivity() {
             }
             true
         }
+    }
+
+    private fun Context.hideKeyboard(view: View) {
+        val inputMethodManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
     }
 }
 
