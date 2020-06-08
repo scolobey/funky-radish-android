@@ -220,7 +220,6 @@ class RecipeSearchActivity : AppCompatActivity() {
         when (item.itemId) {
             // Login
             3 -> {
-                Log.d("API", "Login segue launching.")
                 val intent = Intent(this, LoginActivity::class.java).apply {
                 }
                 startActivity(intent)
@@ -240,8 +239,14 @@ class RecipeSearchActivity : AppCompatActivity() {
                     setUsername(this.getApplicationContext(), "")
                     setUserEmail(this.getApplicationContext(), "")
 
+                    Log.d("API", "Logout repurposing Realm.")
+
+
+                    //TODO: refactor to the Realm File
                     val realmConfiguration = RealmConfiguration.Builder()
                             .name(Constants.REALM_DB_NAME)
+                            .schemaVersion(1)
+                            .migration(Migration())
                             .build()
 
                     Realm.setDefaultConfiguration(realmConfiguration)

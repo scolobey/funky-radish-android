@@ -8,7 +8,6 @@ import io.realm.annotations.RealmClass
 open class Ingredient : RealmObject() {
     @PrimaryKey
     open var realmID: String = ""
-
     open var name: String = ""
 }
 

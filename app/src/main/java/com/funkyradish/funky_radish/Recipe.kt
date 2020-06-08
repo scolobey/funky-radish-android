@@ -13,8 +13,6 @@ open class Recipe : RealmObject() {
     open var title: String? = null
 
     var ingredients: RealmList<Ingredient> = RealmList()
-
-
     var directions: RealmList<Direction> = RealmList()
 }
 
