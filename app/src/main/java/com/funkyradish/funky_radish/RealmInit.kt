@@ -31,6 +31,8 @@ class RealmInit : Application() {
 
             val realmConfiguration = RealmConfiguration.Builder()
                     .name(Constants.REALM_DB_NAME)
+                    .schemaVersion(1)
+                    .migration(Migration())
                     .build()
 
             Realm.setDefaultConfiguration(realmConfiguration)
