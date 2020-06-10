@@ -16,7 +16,6 @@ import android.widget.Toast
 import com.android.volley.toolbox.Volley
 import io.realm.*
 import java.util.*
-import io.realm.SyncUser
 
 class RecipeSearchActivity : AppCompatActivity() {
     private lateinit var realm: Realm
@@ -26,13 +25,13 @@ class RecipeSearchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        realm = Realm.getDefaultInstance()
-
         setContentView(R.layout.activity_recipe_search)
         setSupportActionBar(findViewById(R.id.toolbar))
         prepareCreateRecipeButton()
 
+        realm = Realm.getDefaultInstance()
         recipes = realm.where(Recipe::class.java).findAll()
+
         filteredRecipes = recipes
 
         prepareRecipeListView(filteredRecipes)
@@ -72,6 +71,7 @@ class RecipeSearchActivity : AppCompatActivity() {
                     })
 
                     try {
+                        //TODO: get rid of the variable
                         val queue = Volley.newRequestQueue(this)
                     } catch (e: InterruptedException) {
                         e.printStackTrace()
@@ -232,27 +232,16 @@ class RecipeSearchActivity : AppCompatActivity() {
 
                 builder.setPositiveButton("YES"){dialog, which ->
 
-                    SyncUser.current().logOut()
-                    realm.close()
+                    //Todo: put RealmService up top
+                    RealmService().logout()
 
                     setToken(this.getApplicationContext(), "")
                     setUsername(this.getApplicationContext(), "")
                     setUserEmail(this.getApplicationContext(), "")
 
-                    Log.d("API", "Logout repurposing Realm.")
-
-
-                    //TODO: refactor to the Realm File
-                    val realmConfiguration = RealmConfiguration.Builder()
-                            .name(Constants.REALM_DB_NAME)
-                            .schemaVersion(1)
-                            .migration(Migration())
-                            .build()
-
-                    Realm.setDefaultConfiguration(realmConfiguration)
+                    //TODO: I can either return recipes from the function or just set the recipes to an empty list to avoid calling Realm again.
                     realm = Realm.getDefaultInstance()
                     recipes = realm.where(Recipe::class.java).findAll()
-
                     prepareRecipeListView(recipes)
 
                     toolbar.menu.removeGroup(1)

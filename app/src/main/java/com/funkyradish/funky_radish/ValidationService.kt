@@ -1,6 +1,8 @@
 package com.funkyradish.funky_radish
 
-class Validation {
+import android.util.Log
+
+class ValidationService {
     fun isValidUsername(username: String) {
         if (username.count() > 0) {
             return
@@ -21,6 +23,7 @@ class Validation {
     }
 
     fun isValidPW(password: String) {
+        Log.d("API", "calling pw check")
         val passwordRegex = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$"
         val passwordQualifies = passwordRegex.toRegex().matches(password)
 

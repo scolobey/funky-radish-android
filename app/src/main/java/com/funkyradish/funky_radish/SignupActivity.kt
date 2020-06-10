@@ -39,12 +39,27 @@ class SignupActivity : AppCompatActivity() {
 
         this.hideKeyboard(view)
 
+        val username = findViewById<EditText>(R.id.editText).text.toString()
+        val email = findViewById<EditText>(R.id.editText2).text.toString()
+        val password = findViewById<EditText>(R.id.editText3).text.toString()
+
+        try {
+            var validation = ValidationService()
+
+            validation.isValidUsername(username)
+            validation.isValidEmail(email)
+            validation.isValidPW(password)
+        }
+        catch (error: Error) {
+            Toast.makeText(applicationContext,"${error.message}", Toast.LENGTH_SHORT).show()
+            return
+        }
+
 //      TODO: Might need to check if there's already a user and then message to logout first.
+
         val realm = Realm.getDefaultInstance()
         var recipes = realm.where(Recipe::class.java).findAll()
         var recipeList = realm.copyFromRealm(recipes)
-        
-        realm.close()
 
         if (recipes.count() > 0) {
             var plural = "recipes"
@@ -58,19 +73,17 @@ class SignupActivity : AppCompatActivity() {
 
             builder.setPositiveButton("yes") { dialog, which ->
 
-                val realm2 = Realm.getDefaultInstance()
-                realm2.executeTransaction { _ ->
+                realm.executeTransaction { _ ->
                     try {
                         recipes.deleteAllFromRealm()
-
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
                 }
-                realm2.close()
+                realm.close()
 
                 Log.d("API", "migrating: ${recipeList}")
-                launchSignup(recipeList, view)
+                launchSignup(recipeList, username, email, password, view)
             }
             builder.setNegativeButton("cancel") { dialog, which ->
                 Log.d("API", "canceling signup.")
@@ -80,32 +93,17 @@ class SignupActivity : AppCompatActivity() {
             builder.setNeutralButton("no") { dialog, which ->
                 recipeList.clear()
                 Log.d("API", "Emptying recipe list.")
-                launchSignup(recipeList, view)
+                launchSignup(recipeList, username, email, password, view)
             }
 
             builder.show()
         }
         else {
-            launchSignup(recipeList, view)
+            launchSignup(recipeList, username, email, password, view)
         }
     }
 
-    fun launchSignup(recipeList: List<Recipe?>, view: View) {
-        val username = findViewById<EditText>(R.id.editText).text.toString()
-        val email = findViewById<EditText>(R.id.editText2).text.toString()
-        val password = findViewById<EditText>(R.id.editText3).text.toString()
-
-        try {
-            var validation = Validation()
-
-            validation.isValidUsername(username)
-            validation.isValidEmail(email)
-            validation.isValidPW(password)
-        }
-        catch (error: Error) {
-            Toast.makeText(applicationContext,"${error.message}", Toast.LENGTH_SHORT).show()
-            return
-        }
+    fun launchSignup(recipeList: List<Recipe?>, username: String, email: String, password: String, view: View) {
 
         val progressBar: ProgressBar = this.recipeListSpinner
 

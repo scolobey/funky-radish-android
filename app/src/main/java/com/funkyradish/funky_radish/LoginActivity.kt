@@ -39,6 +39,20 @@ class LoginActivity : AppCompatActivity() {
 
         this.hideKeyboard(view)
 
+        val email = findViewById<EditText>(R.id.loginEmailField).text.toString()
+        val password = findViewById<EditText>(R.id.loginPasswordField).text.toString()
+
+        try {
+            var validation = ValidationService()
+
+            validation.isValidEmail(email)
+            validation.isValidPW(password)
+        }
+        catch (error: Error) {
+            Toast.makeText(applicationContext,"${error.message}", Toast.LENGTH_SHORT).show()
+            return
+        }
+
 //      TODO: Might need to check if there's already a user and then message to logout first.
         val realm = Realm.getDefaultInstance()
         var recipes = realm.where(Recipe::class.java).findAll()
@@ -57,7 +71,7 @@ class LoginActivity : AppCompatActivity() {
 
             builder.setPositiveButton("yes") { dialog, which ->
                 Log.d("API", "migrating: ${recipeList}")
-                launchLogin(recipeList, view)
+                launchLogin(recipeList, email, password, view)
             }
             builder.setNegativeButton("cancel") { dialog, which ->
                 Log.d("API", "canceling signup.")
@@ -67,31 +81,18 @@ class LoginActivity : AppCompatActivity() {
             builder.setNeutralButton("no") { dialog, which ->
                 recipeList.clear()
                 Log.d("API", "Emptying recipe list.")
-                launchLogin(recipeList, view)
+                launchLogin(recipeList, email, password, view)
             }
 
             builder.show()
         }
         else {
             recipeList.clear()
-            launchLogin(recipeList, view)
+            launchLogin(recipeList, email, password, view)
         }
     }
 
-    fun launchLogin(recipeList: List<Recipe?>, view: View) {
-        val email = findViewById<EditText>(R.id.loginEmailField).text.toString()
-        val password = findViewById<EditText>(R.id.loginPasswordField).text.toString()
-
-        try {
-            var validation = Validation()
-
-            validation.isValidEmail(email)
-            validation.isValidPW(password)
-        }
-        catch (error: Error) {
-            Toast.makeText(applicationContext,"${error.message}", Toast.LENGTH_SHORT).show()
-            return
-        }
+    fun launchLogin(recipeList: List<Recipe?>, email: String, password: String, view: View) {
 
         val progressSpinner: ProgressBar = this.recipeListSpinner
 

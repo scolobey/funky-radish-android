@@ -12,7 +12,6 @@ import com.google.gson.GsonBuilder
 import io.realm.*
 import org.json.JSONObject
 import java.util.*
-import com.funkyradish.funky_radish.Constants.AUTH_URL
 import io.realm.SyncUser
 import io.realm.kotlin.createObject
 import org.json.JSONException
@@ -156,21 +155,19 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
                     editor.putString(Constants.FR_TOKEN, token)
                     editor.apply()
 
-                    Log.d("API", "Token stored: ${token}")
-
                     createRealmUser(token, importRecipes, callback, activity)
                 }
                 else {
                     Toast.makeText(
                             activity.applicationContext,
-                            "User not found.",
+                            "${userResponse.message}",
                             Toast.LENGTH_SHORT).show()
                     callback(false)
                 }
 
             },
             Response.ErrorListener { error ->
-                Log.d("API", "error ${error.toString()}:")
+                Log.d("API", "error on token download ${error.toString()}:")
                 Toast.makeText(
                         activity.applicationContext,
                         error.toString(),
@@ -178,6 +175,7 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
 
                 callback(false)
             }
+
     ) {
         override fun getBodyContentType(): String {
             return "application/x-www-form-urlencoded; charset=UTF-8"
@@ -195,10 +193,7 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
 }
 
 fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success: Boolean) -> Unit, activity: Activity) {
-
     var credentials = SyncCredentials.jwt(token)
-
-    Log.d("API", "Gonna try and execute jwt synch.")
 
     val callback2 = object : SyncUser.Callback<SyncUser> {
 
@@ -253,6 +248,8 @@ fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success
         }
     }
 
+    Log.d("API", "error: ${Constants.AUTH_URL}")
+
     SyncUser.logInAsync(credentials, Constants.AUTH_URL, callback2)
 }
 
@@ -289,7 +286,7 @@ fun bulkInsertRecipes(recipeList: List<Recipe?>) {
                 e.printStackTrace()
             }
         }
-
+        realm.close()
     }
 }
 

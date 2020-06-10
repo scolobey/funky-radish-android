@@ -16,6 +16,16 @@ import java.util.UUID;
 public class Migration implements RealmMigration {
 
     @Override
+    public int hashCode() {
+        return 37;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return (o instanceof Migration);
+    }
+
+    @Override
     public void migrate(final DynamicRealm realm, long oldVersion, long newVersion) {
 
         RealmSchema schema = realm.getSchema();
