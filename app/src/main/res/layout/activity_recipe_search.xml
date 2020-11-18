@@ -6,19 +6,16 @@
     android:layout_height="match_parent"
     tools:context=".RecipeSearchActivity">
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:background="#FFFFFF"
-        android:elevation="4dp"
-        app:navigationIcon="@drawable/radish_medium"
-        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-        app:layout_constraintEnd_toEndOf="parent"
+    <ProgressBar
+        android:id="@+id/recipeListSpinner"
+        android:layout_width="3dp"
+        android:layout_height="2dp"
+        android:padding="10dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-    </android.support.v7.widget.Toolbar>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/createRecipeButton"
@@ -26,13 +23,12 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
         android:layout_margin="8dp"
         android:layout_marginBottom="75dp"
         android:layout_marginEnd="75dp"
-        android:layout_marginRight="75dp"
         android:paddingBottom="25dp"
-        android:paddingRight="25dp"
+        android:paddingEnd="25dp"
+        android:paddingLeft="25dp"
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="@android:color/background_light"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -43,9 +39,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="@drawable/main_background_selector"
-        android:scrollbars="none|vertical"
-        android:padding="10dp"
         android:clipToPadding="false"
+        android:padding="10dp"
+        android:scrollbars="none|vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -53,11 +49,18 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar"
         app:layout_constraintVertical_bias="0.0" />
 
-    <ProgressBar
-        android:id="@+id/recipeListSpinner"
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:visibility="gone"/>
+        android:layout_height="60dp"
+        android:background="#FFFFFF"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navigationIcon="@drawable/radish_medium">
+
+    </android.support.v7.widget.Toolbar>
 
 </android.support.constraint.ConstraintLayout>

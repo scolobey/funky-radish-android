@@ -35,8 +35,8 @@ class RecipeViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
         val contentString = StringBuilder()
         val ings = recipe.ingredients
 
-        for (i in 0 until ings!!.size) {
-            contentString.append(ings!![i]!!.name).append("\n")
+        for (i in 0 until ings.size) {
+            contentString.append(ings[i]!!.name).append("\n")
         }
 
         itemView.recipeViewTitle.text = recipe.title
