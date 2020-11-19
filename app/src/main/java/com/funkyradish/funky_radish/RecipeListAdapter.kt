@@ -2,10 +2,10 @@ package com.funkyradish.funky_radish
 
 import android.content.Context
 import android.content.Intent
-import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import io.realm.RealmResults
 import kotlinx.android.synthetic.main.recipe_row.view.*
 

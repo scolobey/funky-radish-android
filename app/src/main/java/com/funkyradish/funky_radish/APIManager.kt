@@ -12,7 +12,7 @@ import com.google.gson.GsonBuilder
 import io.realm.*
 import org.json.JSONObject
 import java.util.*
-import io.realm.SyncUser
+//import io.realm.SyncUser
 import io.realm.kotlin.createObject
 import org.json.JSONException
 
@@ -193,102 +193,102 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
 }
 
 fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success: Boolean) -> Unit, activity: Activity) {
-    var credentials = SyncCredentials.jwt(token)
-
-    val callback2 = object : SyncUser.Callback<SyncUser> {
-
-        override fun onSuccess(user: SyncUser) {
-            Log.d("API", "Realm access successful: Realm User: ${user}")
-
-            //remove recipes from the old
-            val realm = Realm.getDefaultInstance()
-            var recipes = realm.where(Recipe::class.java).findAll()
-            realm.executeTransaction { _ ->
-                try {
-                    recipes.deleteAllFromRealm()
-
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-            realm.close()
-
-            val url = Constants.REALM_URL
-            val synchConfiguration = user.createConfiguration(url)
-                    .fullSynchronization()
-                    .build()
-
-            Realm.setDefaultConfiguration(synchConfiguration)
-
-            Log.d("API", "Inserting recipes: ${recipeList}")
-
-            if (recipeList.count() > 0) {
-                bulkInsertRecipes(recipeList)
-            }
-
-            callback(true)
-        }
-
-        override fun onError(error: ObjectServerError) {
-            Log.d("API", "Realm connection failed")
-
-            val errorMsg: String = when (error.errorCode) {
-                ErrorCode.UNKNOWN_ACCOUNT -> "unknown account"
-                ErrorCode.INVALID_CREDENTIALS -> "invalid credentials"
-                else -> error.toString()
-            }
-            Toast.makeText(
-                    activity.applicationContext,
-                    errorMsg,
-                    Toast.LENGTH_SHORT).show()
-
-            Log.d("API", "error: ${errorMsg}")
-
-            callback(false)
-        }
-    }
-
-    Log.d("API", "error: ${Constants.AUTH_URL}")
-
-    SyncUser.logInAsync(credentials, Constants.AUTH_URL, callback2)
+//    var credentials = SyncCredentials.jwt(token)
+//
+//    val callback2 = object : SyncUser.Callback<SyncUser> {
+//
+//        override fun onSuccess(user: SyncUser) {
+//            Log.d("API", "Realm access successful: Realm User: ${user}")
+//
+//            //remove recipes from the old
+//            val realm = Realm.getDefaultInstance()
+//            var recipes = realm.where(Recipe::class.java).findAll()
+//            realm.executeTransaction { _ ->
+//                try {
+//                    recipes.deleteAllFromRealm()
+//
+//                } catch (e: Exception) {
+//                    e.printStackTrace()
+//                }
+//            }
+//            realm.close()
+//
+//            val url = Constants.REALM_URL
+//            val synchConfiguration = user.createConfiguration(url)
+//                    .fullSynchronization()
+//                    .build()
+//
+//            Realm.setDefaultConfiguration(synchConfiguration)
+//
+//            Log.d("API", "Inserting recipes: ${recipeList}")
+//
+//            if (recipeList.count() > 0) {
+//                bulkInsertRecipes(recipeList)
+//            }
+//
+//            callback(true)
+//        }
+//
+//        override fun onError(error: ObjectServerError) {
+//            Log.d("API", "Realm connection failed")
+//
+//            val errorMsg: String = when (error.errorCode) {
+//                ErrorCode.UNKNOWN_ACCOUNT -> "unknown account"
+//                ErrorCode.INVALID_CREDENTIALS -> "invalid credentials"
+//                else -> error.toString()
+//            }
+//            Toast.makeText(
+//                    activity.applicationContext,
+//                    errorMsg,
+//                    Toast.LENGTH_SHORT).show()
+//
+//            Log.d("API", "error: ${errorMsg}")
+//
+//            callback(false)
+//        }
+//    }
+//
+//    Log.d("API", "error: ${Constants.AUTH_URL}")
+//
+//    SyncUser.logInAsync(credentials, Constants.AUTH_URL, callback2)
 }
 
-fun bulkInsertRecipes(recipeList: List<Recipe?>) {
-    if (recipeList.count() > 0) {
-        val realm = Realm.getDefaultInstance()
-
-        realm.executeTransaction { _ ->
-            try {
-
-                for (i in recipeList) {
-                    var recipe = realm.createObject<Recipe>(UUID.randomUUID().toString())
-                    recipe.title = i!!.title
-
-                    if (i.directions.count() > 0) {
-                        for (j in i.directions) {
-                            val dir = realm.createObject<Direction>(UUID.randomUUID().toString())
-                            dir.text = j.text
-                            recipe.directions.add(dir)
-                        }
-                    }
-
-                    if (i.ingredients.count() > 0) {
-                        for (k in i.ingredients) {
-                            val ing = realm.createObject<Ingredient>(UUID.randomUUID().toString())
-                            ing.name = k.name
-                            recipe.ingredients.add(ing)
-                        }
-                    }
-
-                }
-
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        realm.close()
-    }
-}
+//fun bulkInsertRecipes(recipeList: List<Recipe?>) {
+//    if (recipeList.count() > 0) {
+//        val realm = Realm.getDefaultInstance()
+//
+//        realm.executeTransaction { _ ->
+//            try {
+//
+//                for (i in recipeList) {
+//                    var recipe = realm.createObject<Recipe>(UUID.randomUUID().toString())
+//                    recipe.title = i!!.title
+//
+//                    if (i.directions.count() > 0) {
+//                        for (j in i.directions) {
+//                            val dir = realm.createObject<Direction>(UUID.randomUUID().toString())
+//                            dir.text = j.text
+//                            recipe.directions.add(dir)
+//                        }
+//                    }
+//
+//                    if (i.ingredients.count() > 0) {
+//                        for (k in i.ingredients) {
+//                            val ing = realm.createObject<Ingredient>(UUID.randomUUID().toString())
+//                            ing.name = k.name
+//                            recipe.ingredients.add(ing)
+//                        }
+//                    }
+//
+//                }
+//
+//            } catch (e: Exception) {
+//                e.printStackTrace()
+//            }
+//        }
+//        realm.close()
+//    }
+//}
 
 class UserErrorResponse(val message: String, val name: String)
 

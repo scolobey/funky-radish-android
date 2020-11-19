@@ -7,6 +7,7 @@ import io.realm.*
 class RealmInit : Application() {
 
     override fun onCreate() {
+
         super.onCreate()
         RealmService().initialize(this)
     }

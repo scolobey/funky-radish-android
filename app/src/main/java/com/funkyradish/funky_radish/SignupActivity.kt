@@ -3,9 +3,7 @@ package com.funkyradish.funky_radish
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.View
 import android.widget.EditText
@@ -16,6 +14,8 @@ import kotlinx.android.synthetic.main.activity_recipe_search.*
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 
 class SignupActivity : AppCompatActivity() {
 

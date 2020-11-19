@@ -1,18 +1,18 @@
 package com.funkyradish.funky_radish
 
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.support.v7.app.AlertDialog
 import android.content.Intent
-import android.support.v7.widget.LinearLayoutManager
 import android.view.*
 import kotlinx.android.synthetic.main.activity_recipe_search.*
 import android.text.InputType
 import android.widget.EditText
-import android.support.v7.widget.SearchView
 import android.util.Log
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.android.volley.toolbox.Volley
 import io.realm.*
 import java.util.*
@@ -189,30 +189,30 @@ class RecipeSearchActivity : AppCompatActivity() {
 
         inflater.inflate(R.menu.menu, menu)
 
-        val searchField = menu.findItem(R.id.search_field)
-
-        if(searchField != null) {
-            val searchView = searchField.actionView as SearchView
-            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    return true
-                }
-
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    if (newText!!.isNotEmpty()) {
-                        val searchQuery = newText.toLowerCase()
-                        println(searchQuery)
-                        filteredRecipes = realm.where(Recipe::class.java).contains("title", searchQuery, Case.INSENSITIVE).findAll()
-                        prepareRecipeListView(filteredRecipes)
-                    }
-                    else {
-                        filteredRecipes = recipes
-                        prepareRecipeListView(filteredRecipes)
-                    }
-                    return true
-                }
-            })
-        }
+//        val searchField = menu.findItem(R.id.search_field)
+//
+//        if(searchField != null) {
+//            val searchView = searchField.actionView as SearchView
+//            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+//                override fun onQueryTextSubmit(query: String?): Boolean {
+//                    return true
+//                }
+//
+//                override fun onQueryTextChange(newText: String?): Boolean {
+//                    if (newText!!.isNotEmpty()) {
+//                        val searchQuery = newText.toLowerCase()
+//                        println(searchQuery)
+//                        filteredRecipes = realm.where(Recipe::class.java).contains("title", searchQuery, Case.INSENSITIVE).findAll()
+//                        prepareRecipeListView(filteredRecipes)
+//                    }
+//                    else {
+//                        filteredRecipes = recipes
+//                        prepareRecipeListView(filteredRecipes)
+//                    }
+//                    return true
+//                }
+//            })
+//        }
         return super.onCreateOptionsMenu(menu)
     }
 
