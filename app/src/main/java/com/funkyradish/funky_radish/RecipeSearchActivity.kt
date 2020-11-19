@@ -189,30 +189,31 @@ class RecipeSearchActivity : AppCompatActivity() {
 
         inflater.inflate(R.menu.menu, menu)
 
-//        val searchField = menu.findItem(R.id.search_field)
-//
-//        if(searchField != null) {
-//            val searchView = searchField.actionView as SearchView
-//            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-//                override fun onQueryTextSubmit(query: String?): Boolean {
-//                    return true
-//                }
-//
-//                override fun onQueryTextChange(newText: String?): Boolean {
-//                    if (newText!!.isNotEmpty()) {
-//                        val searchQuery = newText.toLowerCase()
-//                        println(searchQuery)
-//                        filteredRecipes = realm.where(Recipe::class.java).contains("title", searchQuery, Case.INSENSITIVE).findAll()
-//                        prepareRecipeListView(filteredRecipes)
-//                    }
-//                    else {
-//                        filteredRecipes = recipes
-//                        prepareRecipeListView(filteredRecipes)
-//                    }
-//                    return true
-//                }
-//            })
-//        }
+        val searchField = menu.findItem(R.id.search_field)
+
+        if(searchField != null) {
+            val searchView = searchField.actionView as SearchView
+            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                    return true
+                }
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    if (newText!!.isNotEmpty()) {
+                        val searchQuery = newText.toLowerCase()
+                        println(searchQuery)
+                        filteredRecipes = realm.where(Recipe::class.java).contains("title", searchQuery, Case.INSENSITIVE).findAll()
+                        prepareRecipeListView(filteredRecipes)
+                    }
+                    else {
+                        filteredRecipes = recipes
+                        prepareRecipeListView(filteredRecipes)
+                    }
+                    return true
+                }
+            })
+        }
+
         return super.onCreateOptionsMenu(menu)
     }
 
