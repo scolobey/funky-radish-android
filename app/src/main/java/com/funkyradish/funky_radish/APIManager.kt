@@ -66,11 +66,10 @@ fun isConnected(context: Context): Boolean {
     return networkInfo != null && networkInfo.isConnected
 }
 
-fun createUser(activity: Activity, queue: RequestQueue, username: String, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
+fun appRegister(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
 
     // Structure user data
     val json = JSONObject().apply({
-        put("name", username)
         put("email", email)
         put("password", password)
         put("admin", false)
@@ -84,7 +83,7 @@ fun createUser(activity: Activity, queue: RequestQueue, username: String, email:
                 val userResponse = GsonBuilder().create().fromJson(body, UserResponse::class.java)
 
                 setToken(activity.applicationContext, userResponse.token)
-                setUsername(activity.applicationContext, userResponse.userData.name)
+                setUsername(activity.applicationContext, userResponse.userData.email)
                 setUserEmail(activity.applicationContext, userResponse.userData.email)
 
                 Log.d("API", "token: ${userResponse.token}")

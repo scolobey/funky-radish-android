@@ -39,14 +39,12 @@ class SignupActivity : AppCompatActivity() {
 
         this.hideKeyboard(view)
 
-        val username = findViewById<EditText>(R.id.editText).text.toString()
         val email = findViewById<EditText>(R.id.editText2).text.toString()
         val password = findViewById<EditText>(R.id.editText3).text.toString()
 
         try {
             var validation = ValidationService()
 
-            validation.isValidUsername(username)
             validation.isValidEmail(email)
             validation.isValidPW(password)
         }
@@ -83,7 +81,7 @@ class SignupActivity : AppCompatActivity() {
                 realm.close()
 
                 Log.d("API", "migrating: ${recipeList}")
-                launchSignup(recipeList, username, email, password, view)
+                launchSignup(recipeList, email, password, view)
             }
             builder.setNegativeButton("cancel") { dialog, which ->
                 Log.d("API", "canceling signup.")
@@ -93,17 +91,17 @@ class SignupActivity : AppCompatActivity() {
             builder.setNeutralButton("no") { dialog, which ->
                 recipeList.clear()
                 Log.d("API", "Emptying recipe list.")
-                launchSignup(recipeList, username, email, password, view)
+                launchSignup(recipeList, email, password, view)
             }
 
             builder.show()
         }
         else {
-            launchSignup(recipeList, username, email, password, view)
+            launchSignup(recipeList, email, password, view)
         }
     }
 
-    fun launchSignup(recipeList: List<Recipe?>, username: String, email: String, password: String, view: View) {
+    fun launchSignup(recipeList: List<Recipe?>, email: String, password: String, view: View) {
 
         val progressBar: ProgressBar = this.recipeListSpinner
 
@@ -115,7 +113,7 @@ class SignupActivity : AppCompatActivity() {
             try {
                 val queue = Volley.newRequestQueue(this)
 
-                createUser(this, queue, username, email, password, recipeList) { success: Boolean ->
+                appRegister(this, queue, email, password, recipeList) { success: Boolean ->
                     if (success) {
                         this@SignupActivity.runOnUiThread(java.lang.Runnable {
                             val intent = Intent(this, RecipeSearchActivity::class.java).apply {}

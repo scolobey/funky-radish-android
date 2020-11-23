@@ -1,10 +1,17 @@
 package com.funkyradish.funky_radish
 
+import android.app.Activity
 import android.content.Context
 import android.util.Log
+import com.android.volley.RequestQueue
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.mongodb.App
+import io.realm.mongodb.Credentials
+
 //import io.realm.SyncUser
+
+lateinit var realmApp: App
 
 class RealmService {
 
@@ -42,6 +49,37 @@ class RealmService {
                 .build()
 
         Realm.setDefaultConfiguration(realmConfiguration)
+    }
+
+    fun register(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
+
+        Log.d("API", "here we are registering.")
+
+        val customJWTCredentials: Credentials = Credentials.jwt("<token>")
+
+        realmApp.loginAsync(customJWTCredentials) {
+            if (it.isSuccess) {
+                Log.v("AUTH", "Successfully authenticated using a custom JWT.")
+                // Set the user.
+            } else {
+                Log.e("AUTH", "Error logging in: ${it.error.toString()}")
+            }
+        }
+
+//
+//        realmApp.emailPasswordAuth.registerUserAsync(username, password) {
+//            // re-enable the buttons after user registration returns a result
+//            createUserButton.isEnabled = true
+//            loginButton.isEnabled = true
+//            if (!it.isSuccess) {
+//                onLoginFailed("Could not register user.")
+//                Log.e(TAG(), "Error: ${it.error}")
+//            } else {
+//                Log.i(TAG(), "Successfully registered user.")
+//                // when the account has been created successfully, log in to the account
+//                login(false)
+//            }
+//        }
     }
 
     fun logout() {
