@@ -54,49 +54,49 @@ class RecipeSearchActivity : AppCompatActivity() {
 //        }
 
         // If offline mode is toggled on, don't try to download recipes.
-        if(!isOffline(this.applicationContext)) {
-
-            //TODO: check if user is synched.
-            Log.d("API", "Network access approved. Looking for a token.")
-
-            var token = getToken(this.getApplicationContext())
-
-            if (token.length > 0) {
-                Log.d("API", "Token found.")
-                val progressBar: ProgressBar = this.recipeListSpinner
-
-                Thread(Runnable {
-                    this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
-                        progressBar.visibility = View.VISIBLE
-                    })
-
-                    try {
-                        //TODO: get rid of the variable
-                        val queue = Volley.newRequestQueue(this)
-                    } catch (e: InterruptedException) {
-                        e.printStackTrace()
-                        val intent = Intent(this, LoginActivity::class.java)
-                        startActivity(intent)
-                    }
-
-                    this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
-                        Log.d("API", "Stopping loader.")
-                        // Set up recipes. Is device already logged in? Are there recipes on the device?
-                        prepareRecipeListView(filteredRecipes)
-                        progressBar.visibility = View.INVISIBLE
-                    })
-                }).start()
-            }
-            else {
-                Log.d("API", "Did not find a token.")
-
-                // if you're  intentionally in offline mode, don't do this.
-                showAuthorizationDialog()
-            }
-        }
-        else {
-            Toast.makeText(applicationContext,"Synchronization disabled.", Toast.LENGTH_SHORT).show()
-        }
+//        if(!isOffline(this.applicationContext)) {
+//
+//            //TODO: check if user is synched.
+//            Log.d("API", "Network access approved. Looking for a token.")
+//
+//            var token = getToken(this.getApplicationContext())
+//
+//            if (token.length > 0) {
+//                Log.d("API", "Token found.")
+//                val progressBar: ProgressBar = this.recipeListSpinner
+//
+//                Thread(Runnable {
+//                    this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
+//                        progressBar.visibility = View.VISIBLE
+//                    })
+//
+//                    try {
+//                        //TODO: get rid of the variable
+//                        val queue = Volley.newRequestQueue(this)
+//                    } catch (e: InterruptedException) {
+//                        e.printStackTrace()
+//                        val intent = Intent(this, LoginActivity::class.java)
+//                        startActivity(intent)
+//                    }
+//
+//                    this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
+//                        Log.d("API", "Stopping loader.")
+//                        // Set up recipes. Is device already logged in? Are there recipes on the device?
+//                        prepareRecipeListView(filteredRecipes)
+//                        progressBar.visibility = View.INVISIBLE
+//                    })
+//                }).start()
+//            }
+//            else {
+//                Log.d("API", "Did not find a token.")
+//
+//                // if you're  intentionally in offline mode, don't do this.
+//                showAuthorizationDialog()
+//            }
+//        }
+//        else {
+//            Toast.makeText(applicationContext,"Synchronization disabled.", Toast.LENGTH_SHORT).show()
+//        }
     }
 
     override fun onDestroy() {

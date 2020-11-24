@@ -7,6 +7,7 @@ import com.android.volley.RequestQueue
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.mongodb.App
+import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.Credentials
 
 //import io.realm.SyncUser
@@ -17,6 +18,7 @@ class RealmService {
 
     fun initialize(context: Context) {
         Realm.init(context)
+        realmApp = App(AppConfiguration.Builder(Constants.REALM_APP_ID).build())
 
         Log.d("API", "initializing realm")
 //        if (SyncUser.current() != null) {
@@ -39,25 +41,25 @@ class RealmService {
 //        Realm.setDefaultConfiguration(synchConfiguration)
     }
 
-    fun configureDefaultRealm() {
-        Log.d("API", "Configuring default Realm")
-
-        val realmConfiguration = RealmConfiguration.Builder()
-                .name(Constants.REALM_DB_NAME)
-                .schemaVersion(1)
-                .migration(Migration())
-                .build()
-
-        Realm.setDefaultConfiguration(realmConfiguration)
-    }
+//    fun configureDefaultRealm() {
+//        Log.d("API", "Configuring default Realm")
+//
+//        val realmConfiguration = RealmConfiguration.Builder()
+//                .name(Constants.REALM_DB_NAME)
+//                .schemaVersion(1)
+//                .migration(Migration())
+//                .build()
+//
+//        Realm.setDefaultConfiguration(realmConfiguration)
+//    }
 
     fun register(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
 
         Log.d("API", "here we are registering.")
 
-        val customJWTCredentials: Credentials = Credentials.jwt("<token>")
+//        val customJWTCredentials: Credentials = Credentials.jwt("<token>")
 
-        realmApp.loginAsync(customJWTCredentials) {
+        realmApp.emailPasswordAuth.registerUserAsync(email, password) {
             if (it.isSuccess) {
                 Log.v("AUTH", "Successfully authenticated using a custom JWT.")
                 // Set the user.

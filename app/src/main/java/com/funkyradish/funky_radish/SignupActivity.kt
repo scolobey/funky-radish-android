@@ -105,6 +105,17 @@ class SignupActivity : AppCompatActivity() {
 
         val progressBar: ProgressBar = this.recipeListSpinner
 
+
+
+//        realmApp.emailPasswordAuth.registerUserAsync(email, password) {
+//            if (it.isSuccess) {
+//                Log.v("AUTH", "Successfully authenticated using a custom JWT.")
+//                // Set the user.
+//            } else {
+//                Log.e("AUTH", "Error logging in: ${it.error.toString()}")
+//            }
+//        }
+
         Thread(Runnable {
             this@SignupActivity.runOnUiThread(java.lang.Runnable {
                 progressBar.visibility = View.VISIBLE
@@ -113,18 +124,18 @@ class SignupActivity : AppCompatActivity() {
             try {
                 val queue = Volley.newRequestQueue(this)
 
-                appRegister(this, queue, email, password, recipeList) { success: Boolean ->
-                    if (success) {
-                        this@SignupActivity.runOnUiThread(java.lang.Runnable {
-                            val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
-                            startActivity(intent)
-                        })
-                    } else {
-                        this@SignupActivity.runOnUiThread(java.lang.Runnable {
-                            progressBar.visibility = View.INVISIBLE
-                        })
-                    }
-                }
+//                RealmService().register(this, queue, email, password, recipeList) { success: Boolean ->
+//                    if (success) {
+//                        this@SignupActivity.runOnUiThread(java.lang.Runnable {
+//                            val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
+//                            startActivity(intent)
+//                        })
+//                    } else {
+//                        this@SignupActivity.runOnUiThread(java.lang.Runnable {
+//                            progressBar.visibility = View.INVISIBLE
+//                        })
+//                    }
+//                }
 
             } catch (e: InterruptedException) {
                 Log.d("API", "Some kinda error.")
