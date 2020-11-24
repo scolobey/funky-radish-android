@@ -59,14 +59,14 @@ class RealmService {
 
 //        val customJWTCredentials: Credentials = Credentials.jwt("<token>")
 
-        realmApp.emailPasswordAuth.registerUserAsync(email, password) {
-            if (it.isSuccess) {
-                Log.v("AUTH", "Successfully authenticated using a custom JWT.")
-                // Set the user.
-            } else {
-                Log.e("AUTH", "Error logging in: ${it.error.toString()}")
-            }
-        }
+//        realmApp.emailPasswordAuth.registerUserAsync(email, password) {
+//            if (it.isSuccess) {
+//                Log.v("AUTH", "Successfully authenticated using a custom JWT.")
+//                // Set the user.
+//            } else {
+//                Log.e("AUTH", "Error logging in: ${it.error.toString()}")
+//            }
+//        }
 
 //
 //        realmApp.emailPasswordAuth.registerUserAsync(username, password) {

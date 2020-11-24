@@ -14,6 +14,7 @@ import org.json.JSONObject
 import java.util.*
 //import io.realm.SyncUser
 import io.realm.kotlin.createObject
+import io.realm.mongodb.Credentials
 import org.json.JSONException
 
 fun getToken(context: Context): String {
@@ -66,7 +67,7 @@ fun isConnected(context: Context): Boolean {
     return networkInfo != null && networkInfo.isConnected
 }
 
-fun appRegister(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
+fun register(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
 
     // Structure user data
     val json = JSONObject().apply({
@@ -83,8 +84,8 @@ fun appRegister(activity: Activity, queue: RequestQueue, email: String, password
                 val userResponse = GsonBuilder().create().fromJson(body, UserResponse::class.java)
 
                 setToken(activity.applicationContext, userResponse.token)
-                setUsername(activity.applicationContext, userResponse.userData.email)
-                setUserEmail(activity.applicationContext, userResponse.userData.email)
+//                setUsername(activity.applicationContext, userResponse.userData.email)
+//                setUserEmail(activity.applicationContext, userResponse.userData.email)
 
                 Log.d("API", "token: ${userResponse.token}")
 
@@ -192,8 +193,20 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
 }
 
 fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success: Boolean) -> Unit, activity: Activity) {
-//    var credentials = SyncCredentials.jwt(token)
-//
+
+    val credentials: Credentials = Credentials.jwt(token)
+
+//    var user: User? = null
+
+    realmApp.loginAsync(credentials) {
+        if (it.isSuccess) {
+            Log.v("AUTH", "Successfully authenticated using a custom JWT.")
+//            user = realmApp.currentUser()
+        } else {
+            Log.e("AUTH", "Error logging in: ${it.error.toString()}")
+        }
+    }
+
 //    val callback2 = object : SyncUser.Callback<SyncUser> {
 //
 //        override fun onSuccess(user: SyncUser) {
@@ -246,7 +259,7 @@ fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success
 //            callback(false)
 //        }
 //    }
-//
+
 //    Log.d("API", "error: ${Constants.AUTH_URL}")
 //
 //    SyncUser.logInAsync(credentials, Constants.AUTH_URL, callback2)
