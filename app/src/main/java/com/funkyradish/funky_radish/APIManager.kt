@@ -90,9 +90,9 @@ fun register(activity: Activity, queue: RequestQueue, email: String, password: S
                 Log.d("API", "token: ${userResponse.token}")
 
                 createRealmUser(userResponse.token, importRecipes, callback, activity)
+
             },
             Response.ErrorListener { error ->
-
                 Log.d("API", "error on createUser: ${error.message}")
                 error.printStackTrace()
 
@@ -200,8 +200,15 @@ fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success
 
     realmApp.loginAsync(credentials) {
         if (it.isSuccess) {
-            Log.v("AUTH", "Successfully authenticated using a custom JWT.")
-//            user = realmApp.currentUser()
+            Log.v("AUTH", "Successfully authenticated using a custom JWT. ${token}")
+
+            //Set the user
+            realmApp.currentUser()?.name?.let { it1 ->
+                setUsername(activity, it1)
+                setUserEmail(activity, it1)
+            }
+
+            callback(true)
         } else {
             Log.e("AUTH", "Error logging in: ${it.error.toString()}")
         }

@@ -89,7 +89,11 @@ class RealmService {
         //TODO: What if there are several users logged in?
         Log.d("API", "logging out")
 
-//        var realm = Realm.getDefaultInstance()
+        realmApp.currentUser()?.logOut()
+
+
+
+
 //        SyncUser.current().logOut()
 //        realm.close()
 //
