@@ -3,11 +3,12 @@ package com.funkyradish.funky_radish
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 import io.realm.annotations.RealmClass
+import org.bson.types.ObjectId
 
 @RealmClass
 open class Ingredient : RealmObject() {
     @PrimaryKey
-    open var realmID: String = ""
-    open var name: String = ""
+    open var _id: ObjectId = ObjectId()
+    open var name: String? = ""
 }
 

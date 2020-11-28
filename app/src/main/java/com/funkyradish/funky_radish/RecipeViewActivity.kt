@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -15,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_view.*
 import io.realm.kotlin.createObject
+import org.bson.types.ObjectId
 import java.util.*
 
 class RecipeViewActivity : AppCompatActivity() {
@@ -46,7 +48,7 @@ class RecipeViewActivity : AppCompatActivity() {
 
     private fun loadRecipe() {
         val recipeID: String = intent.getStringExtra("rid")
-        recipe = realm.where(Recipe::class.java).equalTo("realmID", recipeID).findFirst()!!
+        recipe = realm.where(Recipe::class.java).equalTo("_id", ObjectId(recipeID)).findFirst()!!
     }
 
     private fun prepareToolbar() {

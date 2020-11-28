@@ -15,6 +15,7 @@ import java.util.*
 //import io.realm.SyncUser
 import io.realm.kotlin.createObject
 import io.realm.mongodb.Credentials
+import io.realm.mongodb.sync.SyncConfiguration
 import org.json.JSONException
 
 fun getToken(context: Context): String {
@@ -195,12 +196,12 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
 fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success: Boolean) -> Unit, activity: Activity) {
 
     val credentials: Credentials = Credentials.jwt(token)
+    Log.v("API", "Logging In. ${token}")
 
 //    var user: User? = null
-
     realmApp.loginAsync(credentials) {
         if (it.isSuccess) {
-            Log.v("AUTH", "Successfully authenticated using a custom JWT. ${token}")
+            Log.v("API", "Successfully authenticated using a custom JWT. ${token}")
 
             //Set the user
             realmApp.currentUser()?.name?.let { it1 ->
@@ -208,9 +209,16 @@ fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success
                 setUserEmail(activity, it1)
             }
 
+            val user: io.realm.mongodb.User? = realmApp.currentUser()
+            val partitionValue: String = "recipes"
+            val config = SyncConfiguration.Builder(user, partitionValue)
+                    .build()
+
+            val backgroundThreadRealm : Realm = Realm.getInstance(config)
+
             callback(true)
         } else {
-            Log.e("AUTH", "Error logging in: ${it.error.toString()}")
+            Log.e("API", "Error logging in: ${it.error.toString()}")
         }
     }
 

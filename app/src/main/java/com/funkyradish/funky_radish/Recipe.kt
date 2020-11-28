@@ -4,11 +4,12 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.RealmClass
 import io.realm.annotations.PrimaryKey
+import org.bson.types.ObjectId
 
 @RealmClass
 open class Recipe : RealmObject() {
     @PrimaryKey
-    open var realmID: String = ""
+    open var _id: ObjectId? = ObjectId()
 
     open var title: String? = null
 

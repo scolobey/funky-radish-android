@@ -118,9 +118,11 @@ class RecipeSearchActivity : AppCompatActivity() {
                     val newRecipe = realm.createObject(Recipe::class.java, UUID.randomUUID().toString())
                     newRecipe.title = input.getText().toString()
 
+                    Log.d("API", "Recipe: ${newRecipe.toString()}")
+
                     //TODO: why is this inside the realm transaction?
                     val intent = Intent(this, RecipeViewActivity::class.java)
-                    intent.putExtra("rid", newRecipe.realmID)
+                    intent.putExtra("rid", newRecipe._id.toString())
                     intent.putExtra("direction", true)
                     startActivity(intent)
                 }
