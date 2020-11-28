@@ -14,6 +14,8 @@ import org.json.JSONObject
 import java.util.*
 //import io.realm.SyncUser
 import io.realm.kotlin.createObject
+import io.realm.mongodb.App
+import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.sync.SyncConfiguration
 import org.json.JSONException
@@ -208,13 +210,6 @@ fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success
                 setUsername(activity, it1)
                 setUserEmail(activity, it1)
             }
-
-            val user: io.realm.mongodb.User? = realmApp.currentUser()
-            val partitionValue: String = "recipes"
-            val config = SyncConfiguration.Builder(user, partitionValue)
-                    .build()
-
-            val backgroundThreadRealm : Realm = Realm.getInstance(config)
 
             callback(true)
         } else {

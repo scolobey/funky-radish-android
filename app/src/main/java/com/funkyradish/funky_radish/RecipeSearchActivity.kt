@@ -15,6 +15,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.android.volley.toolbox.Volley
 import io.realm.*
+import io.realm.mongodb.sync.SyncConfiguration
 import java.util.*
 
 class RecipeSearchActivity : AppCompatActivity() {
@@ -29,7 +30,20 @@ class RecipeSearchActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
         prepareCreateRecipeButton()
 
-        realm = Realm.getDefaultInstance()
+        Log.d("API", "loading rec search view.")
+
+        val user: io.realm.mongodb.User? = realmApp.currentUser()
+
+        if (user != null) {
+            val partitionValue: String = "recipes"
+            val config = SyncConfiguration.Builder(user, partitionValue)
+                    .build()
+
+            realm = Realm.getInstance(config)
+        } else {
+            realm = Realm.getDefaultInstance()
+        }
+
         recipes = realm.where(Recipe::class.java).findAll()
 
         filteredRecipes = recipes

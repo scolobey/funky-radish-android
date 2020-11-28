@@ -48,7 +48,9 @@ class RecipeViewActivity : AppCompatActivity() {
 
     private fun loadRecipe() {
         val recipeID: String = intent.getStringExtra("rid")
-        recipe = realm.where(Recipe::class.java).equalTo("_id", ObjectId(recipeID)).findFirst()!!
+        Log.d("API", "recipeId: ${recipeID}")
+
+        recipe = realm.where(Recipe::class.java).equalTo("_id", ObjectId(recipeID).toString()).findFirst()!!
     }
 
     private fun prepareToolbar() {

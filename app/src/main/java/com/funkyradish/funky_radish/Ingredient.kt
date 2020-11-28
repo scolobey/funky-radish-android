@@ -9,6 +9,7 @@ import org.bson.types.ObjectId
 open class Ingredient : RealmObject() {
     @PrimaryKey
     open var _id: ObjectId = ObjectId()
+    open var author: String = "recipes"
     open var name: String? = ""
 }
 

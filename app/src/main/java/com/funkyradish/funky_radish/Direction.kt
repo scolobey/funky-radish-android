@@ -10,5 +10,7 @@ import org.bson.types.ObjectId
 open class Direction : RealmObject() {
     @PrimaryKey
     @Index open var _id: ObjectId = ObjectId()
+    open var author: String = "recipes"
+
     open var text: String = ""
 }
