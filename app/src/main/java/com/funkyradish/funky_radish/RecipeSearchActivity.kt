@@ -19,7 +19,6 @@ import io.realm.mongodb.sync.SyncConfiguration
 import java.util.*
 
 class RecipeSearchActivity : AppCompatActivity() {
-    private lateinit var realm: Realm
     private lateinit var recipes: RealmResults<Recipe>
     private lateinit var filteredRecipes: RealmResults<Recipe>
 
@@ -30,22 +29,18 @@ class RecipeSearchActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
         prepareCreateRecipeButton()
 
-        Log.d("API", "loading rec search view.")
-
         val user: io.realm.mongodb.User? = realmApp.currentUser()
 
-        if (user != null) {
-            val partitionValue: String = "recipes"
-            val config = SyncConfiguration.Builder(user, partitionValue)
-                    .build()
-
+        if (user != null && user.isLoggedIn!!) {
+            val partitionValue: String = user.id
+            val config = SyncConfiguration.Builder(user, partitionValue).build()
             realm = Realm.getInstance(config)
-        } else {
+        }
+        else {
             realm = Realm.getDefaultInstance()
         }
 
         recipes = realm.where(Recipe::class.java).findAll()
-
         filteredRecipes = recipes
 
         prepareRecipeListView(filteredRecipes)
@@ -54,6 +49,7 @@ class RecipeSearchActivity : AppCompatActivity() {
         var listener = RealmChangeListener<RealmResults<Recipe>>({
             prepareRecipeListView(filteredRecipes)
         })
+
         recipes.addChangeListener(listener)
 
 //        if (isConnected(this.applicationContext)) {
@@ -132,11 +128,18 @@ class RecipeSearchActivity : AppCompatActivity() {
                     val newRecipe = realm.createObject(Recipe::class.java, UUID.randomUUID().toString())
                     newRecipe.title = input.getText().toString()
 
+                    var auth = realmApp.currentUser()
+
+                    if (auth != null) {
+                        newRecipe.author = auth.id
+                    }
+
                     Log.d("API", "Recipe: ${newRecipe.toString()}")
 
                     //TODO: why is this inside the realm transaction?
                     val intent = Intent(this, RecipeViewActivity::class.java)
-                    intent.putExtra("rid", newRecipe._id.toString())
+                    Log.d("API", "accessing recipeId: ${newRecipe._id}")
+                    intent.putExtra("rid", newRecipe._id)
                     intent.putExtra("direction", true)
                     startActivity(intent)
                 }

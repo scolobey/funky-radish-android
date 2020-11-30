@@ -8,8 +8,8 @@ import org.bson.types.ObjectId
 @RealmClass
 open class Ingredient : RealmObject() {
     @PrimaryKey
-    open var _id: ObjectId = ObjectId()
-    open var author: String = "recipes"
-    open var name: String? = ""
+    open var _id: String? = null
+    open var author: String = ""
+    open var name: String = ""
 }
 

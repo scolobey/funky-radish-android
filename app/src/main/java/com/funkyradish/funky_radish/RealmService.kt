@@ -14,6 +14,9 @@ import io.realm.mongodb.Credentials
 
 lateinit var realmApp: App
 
+//TODO: Hide these in private variables to only access through functions.
+lateinit var realm: Realm
+
 class RealmService {
 
     fun initialize(context: Context) {
@@ -90,8 +93,6 @@ class RealmService {
         Log.d("API", "logging out")
 
         realmApp.currentUser()?.logOut()
-
-
 
 
 //        SyncUser.current().logOut()

@@ -55,7 +55,7 @@ class SignupActivity : AppCompatActivity() {
 
 //      TODO: Might need to check if there's already a user and then message to logout first.
 
-        val realm = Realm.getDefaultInstance()
+//        val realm = Realm.getDefaultInstance()
         var recipes = realm.where(Recipe::class.java).findAll()
         var recipeList = realm.copyFromRealm(recipes)
 
@@ -70,16 +70,6 @@ class SignupActivity : AppCompatActivity() {
             builder.setMessage("Detected ${recipeList.count()} ${plural} on this device. Should we copy this data to your new account?")
 
             builder.setPositiveButton("yes") { dialog, which ->
-
-                realm.executeTransaction { _ ->
-                    try {
-                        recipes.deleteAllFromRealm()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                realm.close()
-
                 Log.d("API", "migrating: ${recipeList}")
                 launchSignup(recipeList, email, password, view)
             }
@@ -105,17 +95,6 @@ class SignupActivity : AppCompatActivity() {
 
         val progressBar: ProgressBar = this.recipeListSpinner
 
-
-
-//        realmApp.emailPasswordAuth.registerUserAsync(email, password) {
-//            if (it.isSuccess) {
-//                Log.v("AUTH", "Successfully authenticated using a custom JWT.")
-//                // Set the user.
-//            } else {
-//                Log.e("AUTH", "Error logging in: ${it.error.toString()}")
-//            }
-//        }
-
         Thread(Runnable {
             this@SignupActivity.runOnUiThread(java.lang.Runnable {
                 progressBar.visibility = View.VISIBLE
@@ -138,12 +117,12 @@ class SignupActivity : AppCompatActivity() {
                 }
 
             } catch (e: InterruptedException) {
+                //TODO: This catch can probably be removed.
                 Log.d("API", "Some kinda error.")
                 e.printStackTrace()
             }
 
         }).start()
-
     }
 
 

@@ -82,18 +82,14 @@ fun register(activity: Activity, queue: RequestQueue, email: String, password: S
     // User request
     val userRequest = object : JsonObjectRequest(Method.POST, Constants.ENDPOINT, json,
             Response.Listener<JSONObject> { response ->
-
                 val body = response.toString()
                 val userResponse = GsonBuilder().create().fromJson(body, UserResponse::class.java)
 
                 setToken(activity.applicationContext, userResponse.token)
-//                setUsername(activity.applicationContext, userResponse.userData.email)
-//                setUserEmail(activity.applicationContext, userResponse.userData.email)
 
                 Log.d("API", "token: ${userResponse.token}")
 
                 createRealmUser(userResponse.token, importRecipes, callback, activity)
-
             },
             Response.ErrorListener { error ->
                 Log.d("API", "error on createUser: ${error.message}")
@@ -118,7 +114,6 @@ fun register(activity: Activity, queue: RequestQueue, email: String, password: S
                         Toast.LENGTH_SHORT).show()
 
                 callback(false)
-
             }
     ) {
         override fun getHeaders(): Map<String, String> {
@@ -200,16 +195,39 @@ fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success
     val credentials: Credentials = Credentials.jwt(token)
     Log.v("API", "Logging In. ${token}")
 
-//    var user: User? = null
     realmApp.loginAsync(credentials) {
         if (it.isSuccess) {
             Log.v("API", "Successfully authenticated using a custom JWT. ${token}")
 
-            //Set the user
-            realmApp.currentUser()?.name?.let { it1 ->
-                setUsername(activity, it1)
-                setUserEmail(activity, it1)
+            val user: io.realm.mongodb.User? = realmApp.currentUser()
+
+            if (user != null) {
+                setUsername(activity, user.name)
+                setUserEmail(activity, user.name)
+
+                //remove recipes from realm
+                var recipes = realm.where(Recipe::class.java).findAll()
+
+                realm.executeTransaction { _ ->
+                    try {
+                        recipes.deleteAllFromRealm()
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                realm.close()
+
+                //Switch to new realm
+                val partitionValue: String = user.id
+                val config = SyncConfiguration.Builder(user, partitionValue).build()
+                realm = Realm.getInstance(config)
+
+                // Add recipes to new realm
+                bulkInsertRecipes(recipeList)
             }
+
+            Log.v("API", "There are ${realmApp.allUsers().count()} users")
 
             callback(true)
         } else {
@@ -275,42 +293,50 @@ fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success
 //    SyncUser.logInAsync(credentials, Constants.AUTH_URL, callback2)
 }
 
-//fun bulkInsertRecipes(recipeList: List<Recipe?>) {
-//    if (recipeList.count() > 0) {
-//        val realm = Realm.getDefaultInstance()
-//
-//        realm.executeTransaction { _ ->
-//            try {
-//
-//                for (i in recipeList) {
-//                    var recipe = realm.createObject<Recipe>(UUID.randomUUID().toString())
-//                    recipe.title = i!!.title
-//
-//                    if (i.directions.count() > 0) {
-//                        for (j in i.directions) {
-//                            val dir = realm.createObject<Direction>(UUID.randomUUID().toString())
-//                            dir.text = j.text
-//                            recipe.directions.add(dir)
-//                        }
-//                    }
-//
-//                    if (i.ingredients.count() > 0) {
-//                        for (k in i.ingredients) {
-//                            val ing = realm.createObject<Ingredient>(UUID.randomUUID().toString())
-//                            ing.name = k.name
-//                            recipe.ingredients.add(ing)
-//                        }
-//                    }
-//
-//                }
-//
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//            }
-//        }
-//        realm.close()
-//    }
-//}
+fun bulkInsertRecipes(recipeList: List<Recipe?>) {
+    if (recipeList.count() > 0) {
+
+        realm.executeTransaction { _ ->
+            try {
+
+                for (i in recipeList) {
+                    var recipe = realm.createObject<Recipe>(UUID.randomUUID().toString())
+                    recipe.title = i!!.title
+
+                    var user = realmApp.currentUser()
+
+                    if (user != null) {
+                        recipe.author = user.id
+                    }
+
+                    if (i.directions.count() > 0) {
+                        for (j in i.directions) {
+                            val dir = realm.createObject<Direction>(UUID.randomUUID().toString())
+                            dir.author = recipe.author
+                            dir.text = j.text
+
+                            recipe.directions.add(dir)
+                        }
+                    }
+
+                    if (i.ingredients.count() > 0) {
+                        for (k in i.ingredients) {
+                            val ing = realm.createObject<Ingredient>(UUID.randomUUID().toString())
+                            ing.author = recipe.author
+                            ing.name = k.name
+                            recipe.ingredients.add(ing)
+                        }
+                    }
+
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        realm.close()
+    }
+}
 
 class UserErrorResponse(val message: String, val name: String)
 

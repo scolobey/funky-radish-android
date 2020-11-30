@@ -54,7 +54,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
 //      TODO: Might need to check if there's already a user and then message to logout first.
-        val realm = Realm.getDefaultInstance()
+//        val realm = Realm.getDefaultInstance()
         var recipes = realm.where(Recipe::class.java).findAll()
         var recipeList = realm.copyFromRealm(recipes)
         realm.close()

@@ -14,14 +14,16 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import io.realm.Realm
+import io.realm.RealmResults
 import kotlinx.android.synthetic.main.activity_recipe_view.*
 import io.realm.kotlin.createObject
+import io.realm.kotlin.where
 import org.bson.types.ObjectId
 import java.util.*
 
 class RecipeViewActivity : AppCompatActivity() {
 
-    val realm = Realm.getDefaultInstance()
+//    val realm = Realm.getDefaultInstance()
     var recipe = Recipe()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,7 +52,13 @@ class RecipeViewActivity : AppCompatActivity() {
         val recipeID: String = intent.getStringExtra("rid")
         Log.d("API", "recipeId: ${recipeID}")
 
-        recipe = realm.where(Recipe::class.java).equalTo("_id", ObjectId(recipeID).toString()).findFirst()!!
+//        recipe = realm.where(Recipe::class.java).findFirst()!!
+
+        val tasks : RealmResults<Recipe>? = realm.where<Recipe>().findAll()
+        if (tasks != null) {
+            recipe = tasks.first()!!
+        }
+//        recipe = realm.where(Recipe::class.java).equalTo("_id", recipeID).findFirst()!!
     }
 
     private fun prepareToolbar() {
@@ -65,8 +73,18 @@ class RecipeViewActivity : AppCompatActivity() {
         val directionView = intent.extras.getBoolean("direction")
         var textBoxContents = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
 
+        Log.d("API", "directions ${directionView}")
+        Log.d("API", "ingredients ${textBoxContents}")
+
         realm.executeTransaction { _ ->
             try {
+
+                var user = realmApp.currentUser()
+
+                if (user != null) {
+                    recipe.author = user.id
+                }
+
                 recipe.title = title
 
                 if(directionView) {
@@ -74,6 +92,7 @@ class RecipeViewActivity : AppCompatActivity() {
 
                     for (i in textBoxContents) {
                         val dir = realm.createObject<Direction>(UUID.randomUUID().toString())
+                        dir.author = recipe.author
                         dir.text = i
                         recipe.directions.add(dir)
                     }
@@ -83,6 +102,7 @@ class RecipeViewActivity : AppCompatActivity() {
 
                     for (i in textBoxContents) {
                         val ing = realm.createObject<Ingredient>(UUID.randomUUID().toString())
+                        ing.author = recipe.author
                         ing.name = i
                         recipe.ingredients.add(ing)
                     }
