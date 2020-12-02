@@ -2,6 +2,7 @@ package com.funkyradish.funky_radish
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.preference.PreferenceManager
 import android.util.Log
@@ -14,8 +15,6 @@ import org.json.JSONObject
 import java.util.*
 //import io.realm.SyncUser
 import io.realm.kotlin.createObject
-import io.realm.mongodb.App
-import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.sync.SyncConfiguration
 import org.json.JSONException
@@ -85,6 +84,7 @@ fun register(activity: Activity, queue: RequestQueue, email: String, password: S
                 val body = response.toString()
                 val userResponse = GsonBuilder().create().fromJson(body, UserResponse::class.java)
 
+                //TODO: Probably get rid of this.
                 setToken(activity.applicationContext, userResponse.token)
 
                 Log.d("API", "token: ${userResponse.token}")
@@ -191,49 +191,11 @@ fun downloadToken(activity: Activity, queue: RequestQueue, email: String, passwo
 }
 
 fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success: Boolean) -> Unit, activity: Activity) {
-
     val credentials: Credentials = Credentials.jwt(token)
     Log.v("API", "Logging In. ${token}")
 
-    realmApp.loginAsync(credentials) {
-        if (it.isSuccess) {
-            Log.v("API", "Successfully authenticated using a custom JWT. ${token}")
-
-            val user: io.realm.mongodb.User? = realmApp.currentUser()
-
-            if (user != null) {
-                setUsername(activity, user.name)
-                setUserEmail(activity, user.name)
-
-                //remove recipes from realm
-                var recipes = realm.where(Recipe::class.java).findAll()
-
-                realm.executeTransaction { _ ->
-                    try {
-                        recipes.deleteAllFromRealm()
-
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                realm.close()
-
-                //Switch to new realm
-                val partitionValue: String = user.id
-                val config = SyncConfiguration.Builder(user, partitionValue).build()
-                realm = Realm.getInstance(config)
-
-                // Add recipes to new realm
-                bulkInsertRecipes(recipeList)
-            }
-
-            Log.v("API", "There are ${realmApp.allUsers().count()} users")
-
-            callback(true)
-        } else {
-            Log.e("API", "Error logging in: ${it.error.toString()}")
-        }
-    }
+    realmLogin(activity, credentials, recipeList, callback)
+}
 
 //    val callback2 = object : SyncUser.Callback<SyncUser> {
 //
@@ -291,6 +253,53 @@ fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success
 //    Log.d("API", "error: ${Constants.AUTH_URL}")
 //
 //    SyncUser.logInAsync(credentials, Constants.AUTH_URL, callback2)
+
+
+fun realmLogin(activity: Activity, credentials: Credentials, recipeList: List<Recipe?>, callback: (success: Boolean) -> Unit) {
+//    val credentials: Credentials = Credentials.emailPassword(email, password)
+//    Log.v("API", "Logging In. ${token}")
+
+    Log.v("API", "Realm Login")
+
+    realmApp.loginAsync(credentials) {
+        if (it.isSuccess) {
+            Log.v("API", "Successfully authenticated")
+
+            val user: io.realm.mongodb.User? = realmApp.currentUser()
+
+            if (user != null) {
+                setUsername(activity, user.name)
+                setUserEmail(activity, user.name)
+
+                //remove recipes from realm
+                var recipes = realm.where(Recipe::class.java).findAll()
+
+                realm.executeTransaction { _ ->
+                    try {
+                        recipes.deleteAllFromRealm()
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                realm.close()
+
+                //Switch to new realm
+                val partitionValue: String = user.id
+                val config = SyncConfiguration.Builder(user, partitionValue).build()
+                realm = Realm.getInstance(config)
+
+                // Add recipes to new realm
+                bulkInsertRecipes(recipeList)
+            }
+
+            Log.v("API", "There are ${realmApp.allUsers().count()} users")
+
+            callback(true)
+        } else {
+            Log.e("API", "Error logging in: ${it.error.toString()}")
+        }
+    }
 }
 
 fun bulkInsertRecipes(recipeList: List<Recipe?>) {

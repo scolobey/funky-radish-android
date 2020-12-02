@@ -152,36 +152,53 @@ class RecipeSearchActivity : AppCompatActivity() {
         }
     }
 
-    fun showAuthorizationDialog() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("How would you like to get started?")
-        val array = arrayOf("Login", "Signup", "Continue offline")
-
-        builder.setItems(array) {_, which ->
-            val selected = array[which]
-            when (selected) {
-                "Login" -> {
-                    val intent = Intent(this, LoginActivity::class.java).apply {}
-                    startActivity(intent)
-                }
-                "Signup" -> {
-                    val intent = Intent(this, SignupActivity::class.java).apply {}
-                    startActivity(intent)
-                }
-                else -> {
-                    toggleOfflineMode(this.getApplicationContext())
-                }
-            }
-        }
-
-        val dialog = builder.create()
-        dialog.show()
-    }
+//    fun showAuthorizationDialog() {
+//        val builder = AlertDialog.Builder(this)
+//        builder.setTitle("How would you like to get started?")
+//        val array = arrayOf("Login", "Signup", "Continue offline")
+//
+//        builder.setItems(array) {_, which ->
+//            val selected = array[which]
+//            when (selected) {
+//                "Login" -> {
+//                    val intent = Intent(this, LoginActivity::class.java).apply {}
+//                    startActivity(intent)
+//                }
+//                "Signup" -> {
+//                    val intent = Intent(this, SignupActivity::class.java).apply {}
+//                    startActivity(intent)
+//                }
+//                else -> {
+//                    toggleOfflineMode(this.getApplicationContext())
+//                }
+//            }
+//        }
+//
+//        val dialog = builder.create()
+//        dialog.show()
+//    }
 
 
     fun prepareRecipeListView(recipes: RealmResults<Recipe>) {
         recipe_list_recycler_view.layoutManager = LinearLayoutManager(this)
         recipe_list_recycler_view.adapter = RecipeListAdapter(recipes, this)
+    }
+
+    fun logout() {
+        RealmService().logout()
+
+        setToken(this.getApplicationContext(), "")
+        setUsername(this.getApplicationContext(), "")
+        setUserEmail(this.getApplicationContext(), "")
+
+        //TODO: I can either return recipes from the function or just set the recipes to an empty list to avoid calling Realm again.
+        realm = Realm.getDefaultInstance()
+        recipes = realm.where(Recipe::class.java).findAll()
+        prepareRecipeListView(recipes)
+
+        toolbar.menu.removeGroup(1)
+        toolbar.menu.add(2, 3, 2, "Login")
+        toolbar.menu.add(2, 4, 2, "Signup")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -197,13 +214,6 @@ class RecipeSearchActivity : AppCompatActivity() {
         } else {
             menu.add(2, 3, 2, "Login")
             menu.add(2, 4, 2, "Signup")
-        }
-
-        if (isOffline(this.applicationContext)) {
-            menu.add(3, 5, 3, "Toggle Online")
-        }
-        else {
-            menu.add(3, 5, 3, "Toggle Offline")
         }
 
         inflater.inflate(R.menu.menu, menu)
@@ -248,33 +258,24 @@ class RecipeSearchActivity : AppCompatActivity() {
             // Logout
             2 -> {
                 val builder = AlertDialog.Builder(this)
-                builder.setTitle("This may delete recipes that have not been saved to your online account. Continue?")
 
-                builder.setPositiveButton("YES"){dialog, which ->
+                if(recipes.count() > 0) {
+                    builder.setTitle("This may delete recipes that have not been saved to your online account. Continue?")
 
-                    //Todo: put RealmService up top
-                    RealmService().logout()
+                    builder.setPositiveButton("YES"){dialog, which ->
+                        logout()
+                    }
 
-                    setToken(this.getApplicationContext(), "")
-                    setUsername(this.getApplicationContext(), "")
-                    setUserEmail(this.getApplicationContext(), "")
+                    builder.setNegativeButton("No"){dialog,which ->
+                        Toast.makeText(applicationContext,"Logout cancelled.", Toast.LENGTH_SHORT).show()
+                    }
 
-                    //TODO: I can either return recipes from the function or just set the recipes to an empty list to avoid calling Realm again.
-                    realm = Realm.getDefaultInstance()
-                    recipes = realm.where(Recipe::class.java).findAll()
-                    prepareRecipeListView(recipes)
-
-                    toolbar.menu.removeGroup(1)
-                    toolbar.menu.add(2, 3, 2, "Login")
-                    toolbar.menu.add(2, 4, 2, "Signup")
+                    val dialog = builder.create()
+                    dialog.show()
                 }
-
-                builder.setNegativeButton("No"){dialog,which ->
-                    Toast.makeText(applicationContext,"Logout cancelled.", Toast.LENGTH_SHORT).show()
+                else {
+                    logout()
                 }
-
-                val dialog = builder.create()
-                dialog.show()
 
                 return true
             }

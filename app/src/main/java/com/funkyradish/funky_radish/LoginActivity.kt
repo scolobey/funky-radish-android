@@ -14,7 +14,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.toolbox.Volley
-import io.realm.Realm
+import io.realm.mongodb.Credentials
 import kotlinx.android.synthetic.main.activity_recipe_search.*
 
 class LoginActivity : AppCompatActivity() {
@@ -53,14 +53,13 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-//      TODO: Might need to check if there's already a user and then message to logout first.
-//        val realm = Realm.getDefaultInstance()
         var recipes = realm.where(Recipe::class.java).findAll()
         var recipeList = realm.copyFromRealm(recipes)
         realm.close()
 
-        if (recipes.count() > 0) {
+        if (recipeList.count() > 0) {
             var plural = "recipes"
+
             if (recipeList.count() < 2) {
                 plural = "recipe"
             }
@@ -96,31 +95,32 @@ class LoginActivity : AppCompatActivity() {
 
         val progressSpinner: ProgressBar = this.recipeListSpinner
 
-        // start loading indicator
         Thread(Runnable {
             this@LoginActivity.runOnUiThread(java.lang.Runnable {
-                Log.d("API", "Starting progress bar.")
                 progressSpinner.visibility = View.VISIBLE
             })
 
-            // login
             try {
                 val queue = Volley.newRequestQueue(this)
 
-                downloadToken(this, queue, email, password, recipeList) {
-                    this@LoginActivity.runOnUiThread(java.lang.Runnable {
-                        Log.d("API", "Redirecting to main view.")
-
-                        // Set up recipes. Is device already logged in? Are there recipes on the device?
-                        val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
-                        startActivity(intent)
-                    })
+                register(this, queue, email, password, recipeList) { success: Boolean ->
+                    if (success) {
+                        this@LoginActivity.runOnUiThread(java.lang.Runnable {
+                            val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
+                            startActivity(intent)
+                        })
+                    } else {
+                        this@LoginActivity.runOnUiThread(java.lang.Runnable {
+                            progressSpinner.visibility = View.INVISIBLE
+                        })
+                    }
                 }
-
             } catch (e: InterruptedException) {
+                //TODO: This catch can probably be removed.
                 Log.d("API", "Some kinda error.")
                 e.printStackTrace()
             }
+
         }).start()
     }
 

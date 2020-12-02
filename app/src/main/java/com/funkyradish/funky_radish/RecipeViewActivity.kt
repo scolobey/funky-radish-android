@@ -54,11 +54,11 @@ class RecipeViewActivity : AppCompatActivity() {
 
 //        recipe = realm.where(Recipe::class.java).findFirst()!!
 
-        val tasks : RealmResults<Recipe>? = realm.where<Recipe>().findAll()
-        if (tasks != null) {
-            recipe = tasks.first()!!
-        }
-//        recipe = realm.where(Recipe::class.java).equalTo("_id", recipeID).findFirst()!!
+//        val tasks : RealmResults<Recipe>? = realm.where<Recipe>().findAll()
+//        if (tasks != null) {
+//            recipe = tasks.first()!!
+//        }
+        recipe = realm.where(Recipe::class.java).equalTo("_id", recipeID).findFirst()!!
     }
 
     private fun prepareToolbar() {

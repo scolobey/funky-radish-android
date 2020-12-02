@@ -16,6 +16,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import io.realm.mongodb.Credentials
 
 class SignupActivity : AppCompatActivity() {
 
@@ -93,11 +94,11 @@ class SignupActivity : AppCompatActivity() {
 
     fun launchSignup(recipeList: List<Recipe?>, email: String, password: String, view: View) {
 
-        val progressBar: ProgressBar = this.recipeListSpinner
+        val progressSpinner: ProgressBar = this.recipeListSpinner
 
         Thread(Runnable {
             this@SignupActivity.runOnUiThread(java.lang.Runnable {
-                progressBar.visibility = View.VISIBLE
+                progressSpinner.visibility = View.VISIBLE
             })
 
             try {
@@ -111,11 +112,10 @@ class SignupActivity : AppCompatActivity() {
                         })
                     } else {
                         this@SignupActivity.runOnUiThread(java.lang.Runnable {
-                            progressBar.visibility = View.INVISIBLE
+                            progressSpinner.visibility = View.INVISIBLE
                         })
                     }
                 }
-
             } catch (e: InterruptedException) {
                 //TODO: This catch can probably be removed.
                 Log.d("API", "Some kinda error.")

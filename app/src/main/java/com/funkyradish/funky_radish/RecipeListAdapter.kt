@@ -2,6 +2,7 @@ package com.funkyradish.funky_radish
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -46,6 +47,8 @@ class RecipeViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
             val intent = Intent(itemView.context, RecipeViewActivity::class.java)
             intent.putExtra("rid", recipe._id.toString())
             intent.putExtra("direction", true)
+
+            Log.d("API", "Recipe: ${recipe._id.toString()}")
             itemView.context.startActivity(intent)
         }
     }
