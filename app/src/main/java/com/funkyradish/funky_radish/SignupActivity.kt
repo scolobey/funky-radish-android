@@ -9,14 +9,12 @@ import android.view.View
 import android.widget.EditText
 import android.widget.ProgressBar
 import com.android.volley.toolbox.Volley
-import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_recipe_search.*
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import io.realm.mongodb.Credentials
 
 class SignupActivity : AppCompatActivity() {
 
@@ -56,7 +54,6 @@ class SignupActivity : AppCompatActivity() {
 
 //      TODO: Might need to check if there's already a user and then message to logout first.
 
-//        val realm = Realm.getDefaultInstance()
         var recipes = realm.where(Recipe::class.java).findAll()
         var recipeList = realm.copyFromRealm(recipes)
 
@@ -93,7 +90,6 @@ class SignupActivity : AppCompatActivity() {
     }
 
     fun launchSignup(recipeList: List<Recipe?>, email: String, password: String, view: View) {
-
         val progressSpinner: ProgressBar = this.recipeListSpinner
 
         Thread(Runnable {
@@ -121,7 +117,6 @@ class SignupActivity : AppCompatActivity() {
                 Log.d("API", "Some kinda error.")
                 e.printStackTrace()
             }
-
         }).start()
     }
 

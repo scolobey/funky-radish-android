@@ -4,6 +4,7 @@ import io.realm.Realm
 import io.realm.RealmResults
 
 class RecipeModel : RecipeInterface {
+
     override fun addRecipe(realm: Realm, recipe: Recipe): Boolean {
         try {
             realm.beginTransaction()
@@ -51,9 +52,9 @@ class RecipeModel : RecipeInterface {
         return recipe!!
     }
 
-    fun getRecipes(realm: Realm): RealmResults<Recipe> {
-        return realm.where(Recipe::class.java).findAll()
-    }
+//    fun getRecipes(realm: Realm): RealmResults<Recipe> {
+//        return realm.where(Recipe::class.java).findAll()
+//    }
 
     override fun removeRecipes(realm: Realm): Boolean {
         try {

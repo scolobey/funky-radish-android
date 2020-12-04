@@ -13,17 +13,11 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import io.realm.Realm
-import io.realm.RealmResults
 import kotlinx.android.synthetic.main.activity_recipe_view.*
 import io.realm.kotlin.createObject
-import io.realm.kotlin.where
-import org.bson.types.ObjectId
 import java.util.*
 
 class RecipeViewActivity : AppCompatActivity() {
-
-//    val realm = Realm.getDefaultInstance()
     var recipe = Recipe()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,12 +46,6 @@ class RecipeViewActivity : AppCompatActivity() {
         val recipeID: String = intent.getStringExtra("rid")
         Log.d("API", "recipeId: ${recipeID}")
 
-//        recipe = realm.where(Recipe::class.java).findFirst()!!
-
-//        val tasks : RealmResults<Recipe>? = realm.where<Recipe>().findAll()
-//        if (tasks != null) {
-//            recipe = tasks.first()!!
-//        }
         recipe = realm.where(Recipe::class.java).equalTo("_id", recipeID).findFirst()!!
     }
 
@@ -69,7 +57,6 @@ class RecipeViewActivity : AppCompatActivity() {
     }
 
     private fun saveRecipe(title: String?) {
-
         val directionView = intent.extras.getBoolean("direction")
         var textBoxContents = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
 
@@ -112,7 +99,6 @@ class RecipeViewActivity : AppCompatActivity() {
                 e.printStackTrace()
             }
         }
-
     }
 
     private fun prepareSaveButton() {

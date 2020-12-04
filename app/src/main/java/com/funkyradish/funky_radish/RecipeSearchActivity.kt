@@ -7,13 +7,11 @@ import kotlinx.android.synthetic.main.activity_recipe_search.*
 import android.text.InputType
 import android.widget.EditText
 import android.util.Log
-import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.android.volley.toolbox.Volley
 import io.realm.*
 import io.realm.mongodb.sync.SyncConfiguration
 import java.util.*

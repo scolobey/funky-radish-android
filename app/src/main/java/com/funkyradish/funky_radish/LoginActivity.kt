@@ -14,7 +14,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.toolbox.Volley
-import io.realm.mongodb.Credentials
 import kotlinx.android.synthetic.main.activity_recipe_search.*
 
 class LoginActivity : AppCompatActivity() {
@@ -120,7 +119,6 @@ class LoginActivity : AppCompatActivity() {
                 Log.d("API", "Some kinda error.")
                 e.printStackTrace()
             }
-
         }).start()
     }
 

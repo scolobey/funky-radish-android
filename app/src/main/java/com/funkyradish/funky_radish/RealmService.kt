@@ -1,16 +1,10 @@
 package com.funkyradish.funky_radish
 
-import android.app.Activity
 import android.content.Context
 import android.util.Log
-import com.android.volley.RequestQueue
 import io.realm.Realm
-import io.realm.RealmConfiguration
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
-import io.realm.mongodb.Credentials
-
-//import io.realm.SyncUser
 
 lateinit var realmApp: App
 
@@ -24,16 +18,10 @@ class RealmService {
         realmApp = App(AppConfiguration.Builder(Constants.REALM_APP_ID).build())
 
         Log.d("API", "initializing realm")
-//        if (SyncUser.current() != null) {
-//            configureSynchedRealm()
-//        }
-//        else {
-//            configureDefaultRealm()
-//        }
     }
 
-    fun configureSynchedRealm() {
-        Log.d("API", "configuring synched realm")
+//    fun configureSynchedRealm() {
+//        Log.d("API", "configuring synched realm")
 //        val currentUser = SyncUser.current()
 //        val url = Constants.REALM_URL
 //        val synchConfiguration = currentUser.createConfiguration(url)
@@ -42,7 +30,7 @@ class RealmService {
 //                .build()
 //
 //        Realm.setDefaultConfiguration(synchConfiguration)
-    }
+//    }
 
 //    fun configureDefaultRealm() {
 //        Log.d("API", "Configuring default Realm")
@@ -56,9 +44,9 @@ class RealmService {
 //        Realm.setDefaultConfiguration(realmConfiguration)
 //    }
 
-    fun register(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
-
-        Log.d("API", "here we are registering.")
+//    fun register(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
+//
+//        Log.d("API", "here we are registering.")
 
 //        val customJWTCredentials: Credentials = Credentials.jwt("<token>")
 
@@ -85,10 +73,9 @@ class RealmService {
 //                login(false)
 //            }
 //        }
-    }
+//    }
 
     fun logout() {
-
         //TODO: What if there are several users logged in?
         Log.d("API", "logging out")
 
