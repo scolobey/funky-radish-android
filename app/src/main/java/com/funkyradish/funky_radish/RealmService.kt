@@ -67,7 +67,7 @@ class RealmService {
 //            if (!it.isSuccess) {
 //                onLoginFailed("Could not register user.")
 //                Log.e(TAG(), "Error: ${it.error}")
-//            } else {
+//            } else {callback: (success: Boolean) -> Unit
 //                Log.i(TAG(), "Successfully registered user.")
 //                // when the account has been created successfully, log in to the account
 //                login(false)
@@ -75,11 +75,18 @@ class RealmService {
 //        }
 //    }
 
-    fun logout() {
-        //TODO: What if there are several users logged in?
+    fun logout(callback: (success: Boolean) -> Unit) {
         Log.d("API", "logging out")
 
-        realmApp.currentUser()?.logOut()
+//        realmApp.currentUser()?.logOut()
+
+        realmApp.currentUser()?.logOutAsync {
+            if (it.isSuccess) {
+                callback(true)
+            } else {
+                callback(false)
+            }
+        }
 
 
 //        SyncUser.current().logOut()

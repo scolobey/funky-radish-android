@@ -1,12 +1,12 @@
 package com.funkyradish.funky_radish
 
-import android.os.Bundle
 import android.content.Intent
-import android.view.*
-import kotlinx.android.synthetic.main.activity_recipe_search.*
+import android.os.Bundle
 import android.text.InputType
-import android.widget.EditText
 import android.util.Log
+import android.view.*
+import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +14,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.realm.*
 import io.realm.mongodb.sync.SyncConfiguration
+import kotlinx.android.synthetic.main.activity_recipe_search.*
 import java.util.*
 
 class RecipeSearchActivity : AppCompatActivity() {
@@ -142,8 +143,7 @@ class RecipeSearchActivity : AppCompatActivity() {
                     startActivity(intent)
                 }
             }
-            builder.setNegativeButton("Cancel") {
-                dialog, which -> dialog.cancel()
+            builder.setNegativeButton("Cancel") { dialog, which -> dialog.cancel()
             }
 
             builder.show()
@@ -183,20 +183,42 @@ class RecipeSearchActivity : AppCompatActivity() {
     }
 
     fun logout() {
-        RealmService().logout()
+        val progressSpinner: ProgressBar = this.recipeListSpinner
+        progressSpinner.visibility = View.VISIBLE
 
-        setToken(this.getApplicationContext(), "")
-        setUsername(this.getApplicationContext(), "")
-        setUserEmail(this.getApplicationContext(), "")
 
-        //TODO: I can either return recipes from the function or just set the recipes to an empty list to avoid calling Realm again.
-        realm = Realm.getDefaultInstance()
-        recipes = realm.where(Recipe::class.java).findAll()
-        prepareRecipeListView(recipes)
+        try {
+            RealmService().logout() { success: Boolean ->
+                if (success) {
+                    this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
+                        setToken(this.getApplicationContext(), "")
+                        setUsername(this.getApplicationContext(), "")
+                        setUserEmail(this.getApplicationContext(), "")
 
-        toolbar.menu.removeGroup(1)
-        toolbar.menu.add(2, 3, 2, "Login")
-        toolbar.menu.add(2, 4, 2, "Signup")
+                        realm = Realm.getDefaultInstance()
+                        recipes = realm.where(Recipe::class.java).findAll()
+                        prepareRecipeListView(recipes)
+
+                        toolbar.menu.removeGroup(1)
+                        toolbar.menu.add(2, 3, 2, "Login")
+                        toolbar.menu.add(2, 4, 2, "Signup")
+
+                        progressSpinner.visibility = View.INVISIBLE
+                    })
+                } else {
+                    this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
+                        progressSpinner.visibility = View.INVISIBLE
+                    })
+                }
+            }
+        } catch (e: InterruptedException) {
+            //TODO: This catch can probably be removed.
+            Log.d("API", "Some kinda error.")
+            this@RecipeSearchActivity.runOnUiThread(java.lang.Runnable {
+                progressSpinner.visibility = View.INVISIBLE
+            })
+            e.printStackTrace()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -231,8 +253,7 @@ class RecipeSearchActivity : AppCompatActivity() {
                         println(searchQuery)
                         filteredRecipes = realm.where(Recipe::class.java).contains("title", searchQuery, Case.INSENSITIVE).findAll()
                         prepareRecipeListView(filteredRecipes)
-                    }
-                    else {
+                    } else {
                         filteredRecipes = recipes
                         prepareRecipeListView(filteredRecipes)
                     }
@@ -257,21 +278,20 @@ class RecipeSearchActivity : AppCompatActivity() {
             2 -> {
                 val builder = AlertDialog.Builder(this)
 
-                if(recipes.count() > 0) {
+                if (recipes.count() > 0) {
                     builder.setTitle("This may delete recipes that have not been saved to your online account. Continue?")
 
-                    builder.setPositiveButton("YES"){dialog, which ->
+                    builder.setPositiveButton("YES") { dialog, which ->
                         logout()
                     }
 
-                    builder.setNegativeButton("No"){dialog,which ->
-                        Toast.makeText(applicationContext,"Logout cancelled.", Toast.LENGTH_SHORT).show()
+                    builder.setNegativeButton("No") { dialog, which ->
+                        Toast.makeText(applicationContext, "Logout cancelled.", Toast.LENGTH_SHORT).show()
                     }
 
                     val dialog = builder.create()
                     dialog.show()
-                }
-                else {
+                } else {
                     logout()
                 }
 
@@ -292,8 +312,7 @@ class RecipeSearchActivity : AppCompatActivity() {
 
                 if (isOffline(this.applicationContext)) {
                     toolbar.menu.add(3, 5, 3, "Toggle Online")
-                }
-                else {
+                } else {
                     toolbar.menu.add(3, 5, 3, "Toggle Offline")
                 }
                 return true
