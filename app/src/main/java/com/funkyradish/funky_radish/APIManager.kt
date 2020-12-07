@@ -35,6 +35,7 @@ fun getUserEmail(context: Context): String {
 }
 
 fun setUserEmail(context: Context, userEmail: String) {
+    Log.d("API", "Email: ${userEmail}")
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
     val editor = preferences.edit()
     editor.putString(Constants.FR_USER_EMAIL, userEmail)
@@ -42,6 +43,7 @@ fun setUserEmail(context: Context, userEmail: String) {
 }
 
 fun setUsername(context: Context, username: String) {
+    Log.d("API", "Username: ${username}")
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
     val editor = preferences.edit()
     editor.putString(Constants.FR_USERNAME, username)
@@ -160,7 +162,7 @@ fun realmLogin(activity: Activity, credentials: Credentials, recipeList: List<Re
                 realm.executeTransaction { _ ->
                     try {
                         recipes.deleteAllFromRealm()
-
+                        Log.v("API", "Inner thread called.")
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -226,7 +228,7 @@ fun bulkInsertRecipes(recipeList: List<Recipe?>) {
                 e.printStackTrace()
             }
         }
-        realm.close()
+//        realm.close()
     }
 }
 
@@ -235,117 +237,3 @@ class UserErrorResponse(val message: String, val name: String)
 class UserResponse(val message: String, val token: String, val userData: User)
 
 class User(val email: String, val name: String, val _id: String)
-
-//class TokenResponse(val success: Boolean, val message: String, val token: String)
-
-//fun downloadToken(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
-//
-//    val preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
-//
-//    val tokenRequest = object : StringRequest(Method.POST, Constants.ENDPOINT2,
-//            Response.Listener { response ->
-//                val body = response.toString()
-//
-//                val gson = GsonBuilder().create()
-//                val userResponse = gson.fromJson(body, TokenResponse::class.java)
-//
-//                if (userResponse.success) {
-//                    setUserEmail(activity.applicationContext, email)
-//                    val token = userResponse.token
-//                    val editor = preferences.edit()
-//                    editor.putString(Constants.FR_TOKEN, token)
-//                    editor.apply()
-//
-//                    createRealmUser(token, importRecipes, callback, activity)
-//                }
-//                else {
-//                    Toast.makeText(
-//                            activity.applicationContext,
-//                            "${userResponse.message}",
-//                            Toast.LENGTH_SHORT).show()
-//                    callback(false)
-//                }
-//
-//            },
-//            Response.ErrorListener { error ->
-//                Log.d("API", "error on token download ${error.toString()}:")
-//                Toast.makeText(
-//                        activity.applicationContext,
-//                        error.toString(),
-//                        Toast.LENGTH_SHORT).show()
-//
-//                callback(false)
-//            }
-//
-//    ) {
-//        override fun getBodyContentType(): String {
-//            return "application/x-www-form-urlencoded; charset=UTF-8"
-//        }
-//
-//        override fun getParams(): MutableMap<String, String> {
-//            val paramMap :HashMap<String,String> = HashMap<String, String>()
-//            paramMap.put("email", email);
-//            paramMap.put("password", password);
-//            return paramMap
-//        }
-//    }
-//
-//    queue.add(tokenRequest)
-//}
-
-//    val callback2 = object : SyncUser.Callback<SyncUser> {
-//
-//        override fun onSuccess(user: SyncUser) {
-//            Log.d("API", "Realm access successful: Realm User: ${user}")
-//
-//            //remove recipes from the old
-//            val realm = Realm.getDefaultInstance()
-//            var recipes = realm.where(Recipe::class.java).findAll()
-//            realm.executeTransaction { _ ->
-//                try {
-//                    recipes.deleteAllFromRealm()
-//
-//                } catch (e: Exception) {
-//                    e.printStackTrace()
-//                }
-//            }
-//            realm.close()
-//
-//            val url = Constants.REALM_URL
-//            val synchConfiguration = user.createConfiguration(url)
-//                    .fullSynchronization()
-//                    .build()
-//
-//            Realm.setDefaultConfiguration(synchConfiguration)
-//
-//            Log.d("API", "Inserting recipes: ${recipeList}")
-//
-//            if (recipeList.count() > 0) {
-//                bulkInsertRecipes(recipeList)
-//            }
-//
-//            callback(true)
-//        }
-//
-//        override fun onError(error: ObjectServerError) {
-//            Log.d("API", "Realm connection failed")
-//
-//            val errorMsg: String = when (error.errorCode) {
-//                ErrorCode.UNKNOWN_ACCOUNT -> "unknown account"
-//                ErrorCode.INVALID_CREDENTIALS -> "invalid credentials"
-//                else -> error.toString()
-//            }
-//            Toast.makeText(
-//                    activity.applicationContext,
-//                    errorMsg,
-//                    Toast.LENGTH_SHORT).show()
-//
-//            Log.d("API", "error: ${errorMsg}")
-//
-//            callback(false)
-//        }
-//    }
-
-//    Log.d("API", "error: ${Constants.AUTH_URL}")
-//
-//    SyncUser.logInAsync(credentials, Constants.AUTH_URL, callback2)

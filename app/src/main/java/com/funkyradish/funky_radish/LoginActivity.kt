@@ -54,7 +54,7 @@ class LoginActivity : AppCompatActivity() {
 
         var recipes = realm.where(Recipe::class.java).findAll()
         var recipeList = realm.copyFromRealm(recipes)
-        realm.close()
+//        realm.close()
 
         if (recipeList.count() > 0) {
             var plural = "recipes"
