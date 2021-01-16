@@ -54,7 +54,6 @@ class LoginActivity : AppCompatActivity() {
 
         var recipes = realm.where(Recipe::class.java).findAll()
         var recipeList = realm.copyFromRealm(recipes)
-//        realm.close()
 
         if (recipeList.count() > 0) {
             var plural = "recipes"
@@ -102,7 +101,7 @@ class LoginActivity : AppCompatActivity() {
             try {
                 val queue = Volley.newRequestQueue(this)
 
-                register(this, queue, email, password, recipeList) { success: Boolean ->
+               login(this, queue, email, password, recipeList) { success: Boolean ->
                     if (success) {
                         this@LoginActivity.runOnUiThread(java.lang.Runnable {
                             val intent = Intent(this, RecipeSearchActivity::class.java).apply {}

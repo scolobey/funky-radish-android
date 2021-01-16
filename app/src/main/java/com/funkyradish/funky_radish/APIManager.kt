@@ -69,6 +69,7 @@ fun isConnected(context: Context): Boolean {
     return networkInfo != null && networkInfo.isConnected
 }
 
+//TODO: get rid of the importRecipes
 fun register(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
 
     // Structure user data
@@ -84,15 +85,21 @@ fun register(activity: Activity, queue: RequestQueue, email: String, password: S
                 val body = response.toString()
                 val userResponse = GsonBuilder().create().fromJson(body, UserResponse::class.java)
 
-                //TODO: Probably get rid of this.
-                setToken(activity.applicationContext, userResponse.token)
+                // If message = Verification email sent.
+                if (userResponse.message == "Verification email sent.") {
+                    callback(true)
+                }
+                else {
+                    Toast.makeText(
+                            activity.applicationContext,
+                            userResponse.message,
+                            Toast.LENGTH_SHORT).show()
 
-                Log.d("API", "token: ${userResponse.token}")
-
-                createRealmUser(userResponse.token, importRecipes, callback, activity)
+                    callback(false)
+                }
             },
             Response.ErrorListener { error ->
-                Log.d("API", "error on createUser: ${error.message}")
+                Log.d("API", "error on createUser: ${error}")
                 error.printStackTrace()
 
                 var errorMessage = error.toString()
@@ -125,6 +132,77 @@ fun register(activity: Activity, queue: RequestQueue, email: String, password: S
 
     if(isConnected(activity.applicationContext)) {
         queue.add(userRequest)
+    }
+    else {
+        Toast.makeText(
+                activity.applicationContext,
+                "Unable to connect to internet",
+                Toast.LENGTH_SHORT).show()
+    }
+
+}
+
+fun login(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
+
+    // Structure user data
+    val json = JSONObject().apply({
+        put("email", email)
+        put("password", password)
+    })
+
+    val authRequest = object : JsonObjectRequest(Method.POST, Constants.AuthEndpoint, json,
+            Response.Listener<JSONObject> { response ->
+                val body = response.toString()
+                val response = GsonBuilder().create().fromJson(body, UserResponse::class.java)
+
+                if (response.message == "Enjoy your token, ya filthy animal!") {
+                    setToken(activity.applicationContext, response.token)
+                    createRealmUser(response.token, importRecipes, callback, activity)
+                }
+                else {
+                    Toast.makeText(
+                            activity.applicationContext,
+                            response.message,
+                            Toast.LENGTH_SHORT).show()
+
+                    callback(false)
+                }
+            },
+            Response.ErrorListener { error ->
+                Log.d("API", "Authorization error: ${error}")
+                error.printStackTrace()
+
+                var errorMessage = error.toString()
+
+                val response = error.networkResponse
+                if (error is ServerError && response != null) {
+                    try {
+                        val json = String(response.data)
+                        val userErrorResponse = GsonBuilder().create().fromJson(json, UserErrorResponse::class.java)
+                        errorMessage = userErrorResponse.message
+                    } catch (e2: JSONException) {
+                        e2.printStackTrace()
+                    }
+                }
+
+                Toast.makeText(
+                        activity.applicationContext,
+                        errorMessage,
+                        Toast.LENGTH_SHORT).show()
+
+                callback(false)
+            }
+    ) {
+        override fun getHeaders(): Map<String, String> {
+            val headers = HashMap<String, String>()
+            headers.put("Content-Type", "application/json; charset=utf-8")
+            return headers
+        }
+    }
+
+    //TODO: Do we really need to check connection?
+    if(isConnected(activity.applicationContext)) {
+        queue.add(authRequest)
     }
     else {
         Toast.makeText(
@@ -179,10 +257,10 @@ fun realmLogin(activity: Activity, credentials: Credentials, recipeList: List<Re
             }
 
             Log.v("API", "There are ${realmApp.allUsers().count()} users")
-
             callback(true)
         } else {
             Log.e("API", "Error logging in: ${it.error.toString()}")
+            callback(false)
         }
     }
 }
@@ -234,6 +312,6 @@ fun bulkInsertRecipes(recipeList: List<Recipe?>) {
 
 class UserErrorResponse(val message: String, val name: String)
 
-class UserResponse(val message: String, val token: String, val userData: User)
+class UserResponse(val message: String, val token: String, val error: String)
 
 class User(val email: String, val name: String, val _id: String)

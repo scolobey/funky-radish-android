@@ -103,8 +103,17 @@ class SignupActivity : AppCompatActivity() {
                 register(this, queue, email, password, recipeList) { success: Boolean ->
                     if (success) {
                         this@SignupActivity.runOnUiThread(java.lang.Runnable {
-                            val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
-                            startActivity(intent)
+
+                            val builder = AlertDialog.Builder(this)
+                            builder.setTitle("Check your email")
+                            builder.setMessage("We've sent you a link to verify your email and complete registration.")
+
+                            builder.setPositiveButton("dismiss") { dialog, which ->
+                                val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
+                                startActivity(intent)
+                            }
+
+                            builder.show()
                         })
                     } else {
                         this@SignupActivity.runOnUiThread(java.lang.Runnable {
