@@ -23,9 +23,9 @@ class SignupActivity : AppCompatActivity() {
         setContentView(R.layout.activity_signup)
 
         // enable submit from keypad
-        val edit_pwd = findViewById(R.id.editText3) as EditText
+        val editPwd = findViewById<EditText>(R.id.editText3)
 
-        edit_pwd.onSubmit {
+        editPwd.onSubmit {
             sendMessage(view = findViewById(android.R.id.content))
         }
     }
@@ -65,31 +65,31 @@ class SignupActivity : AppCompatActivity() {
 
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Transfer recipes?")
-            builder.setMessage("Detected ${recipeList.count()} ${plural} on this device. Should we copy this data to your new account?")
+            builder.setMessage("Detected ${recipeList.count()} $plural on this device. Should we copy this data to your new account?")
 
-            builder.setPositiveButton("yes") { dialog, which ->
-                Log.d("API", "migrating: ${recipeList}")
-                launchSignup(recipeList, email, password, view)
+            builder.setPositiveButton("yes") { _, _ ->
+                Log.d("API", "migrating: $recipeList")
+                launchSignup(email, password)
             }
-            builder.setNegativeButton("cancel") { dialog, which ->
-                Log.d("API", "canceling signup.")
+            builder.setNegativeButton("cancel") { _, _ ->
+                Log.d("API", "canceling sign up.")
                 val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
                 startActivity(intent)
             }
-            builder.setNeutralButton("no") { dialog, which ->
+            builder.setNeutralButton("no") { _, _ ->
                 recipeList.clear()
                 Log.d("API", "Emptying recipe list.")
-                launchSignup(recipeList, email, password, view)
+                launchSignup(email, password)
             }
 
             builder.show()
         }
         else {
-            launchSignup(recipeList, email, password, view)
+            launchSignup(email, password)
         }
     }
 
-    fun launchSignup(recipeList: List<Recipe?>, email: String, password: String, view: View) {
+    private fun launchSignup(email: String, password: String) {
         val progressSpinner: ProgressBar = this.recipeListSpinner
 
         Thread(Runnable {
@@ -100,7 +100,7 @@ class SignupActivity : AppCompatActivity() {
             try {
                 val queue = Volley.newRequestQueue(this)
 
-                register(this, queue, email, password, recipeList) { success: Boolean ->
+                register(this, queue, email, password) { success: Boolean ->
                     if (success) {
                         this@SignupActivity.runOnUiThread(java.lang.Runnable {
 
@@ -108,7 +108,7 @@ class SignupActivity : AppCompatActivity() {
                             builder.setTitle("Check your email")
                             builder.setMessage("We've sent you a link to verify your email and complete registration.")
 
-                            builder.setPositiveButton("dismiss") { dialog, which ->
+                            builder.setPositiveButton("dismiss") { _, _ ->
                                 val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
                                 startActivity(intent)
                             }
@@ -130,7 +130,7 @@ class SignupActivity : AppCompatActivity() {
     }
 
 
-    fun loginSegue(view: View) {
+    fun loginSegue() {
         val intent = Intent(this, LoginActivity::class.java).apply {}
         startActivity(intent)
     }

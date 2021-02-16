@@ -64,32 +64,32 @@ class LoginActivity : AppCompatActivity() {
 
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Transfer recipes?")
-            builder.setMessage("Detected ${recipeList.count()} ${plural} on this device. Should we copy this data to your new account?")
+            builder.setMessage("Detected ${recipeList.count()} $plural on this device. Should we copy this data to your new account?")
 
-            builder.setPositiveButton("yes") { dialog, which ->
-                Log.d("API", "migrating: ${recipeList}")
-                launchLogin(recipeList, email, password, view)
+            builder.setPositiveButton("yes") { _, _ ->
+                Log.d("API", "migrating: $recipeList")
+                launchLogin(recipeList, email, password)
             }
-            builder.setNegativeButton("cancel") { dialog, which ->
+            builder.setNegativeButton("cancel") { _, _ ->
                 Log.d("API", "canceling signup.")
                 val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
                 startActivity(intent)
             }
-            builder.setNeutralButton("no") { dialog, which ->
+            builder.setNeutralButton("no") { _, _ ->
                 recipeList.clear()
                 Log.d("API", "Emptying recipe list.")
-                launchLogin(recipeList, email, password, view)
+                launchLogin(recipeList, email, password)
             }
 
             builder.show()
         }
         else {
             recipeList.clear()
-            launchLogin(recipeList, email, password, view)
+            launchLogin(recipeList, email, password)
         }
     }
 
-    fun launchLogin(recipeList: List<Recipe?>, email: String, password: String, view: View) {
+    fun launchLogin(recipeList: List<Recipe?>, email: String, password: String) {
 
         val progressSpinner: ProgressBar = this.recipeListSpinner
 
@@ -121,14 +121,14 @@ class LoginActivity : AppCompatActivity() {
         }).start()
     }
 
-    fun signupSegue(view: View) {
+    fun signupSegue() {
         val intent = Intent(this, SignupActivity::class.java).apply {
         }
         startActivity(intent)
     }
 
     // Trigger for the done button on the keyboard
-    fun EditText.onSubmit(func: () -> Unit) {
+    private fun EditText.onSubmit(func: () -> Unit) {
         setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 func()

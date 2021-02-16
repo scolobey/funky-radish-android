@@ -30,7 +30,7 @@ class RecipeSearchActivity : AppCompatActivity() {
 
         val user: io.realm.mongodb.User? = realmApp.currentUser()
 
-        if (user != null && user.isLoggedIn!!) {
+        if (user != null && user.isLoggedIn) {
             val partitionValue: String = user.id
             val config = SyncConfiguration.Builder(user, partitionValue).build()
             realm = Realm.getInstance(config)
@@ -67,11 +67,11 @@ class RecipeSearchActivity : AppCompatActivity() {
             input.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_NORMAL
             builder.setView(input)
 
-            builder.setPositiveButton("OK") { dialog, which ->
+            builder.setPositiveButton("OK") { _, _ ->
                 // Create a recipe with a given title. Pass the recipe's _id to the editor.
                 realm.executeTransaction { realm ->
                     val newRecipe = realm.createObject(Recipe::class.java, UUID.randomUUID().toString())
-                    newRecipe.title = input.getText().toString()
+                    newRecipe.title = input.text.toString()
 
                     var auth = realmApp.currentUser()
 
@@ -89,7 +89,7 @@ class RecipeSearchActivity : AppCompatActivity() {
                     startActivity(intent)
                 }
             }
-            builder.setNegativeButton("Cancel") { dialog, which -> dialog.cancel()
+            builder.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel()
             }
 
             builder.show()
@@ -174,12 +174,14 @@ class RecipeSearchActivity : AppCompatActivity() {
         var token = getToken(this.getApplicationContext())
         var userEmail = getUserEmail(this.getApplicationContext())
 
-        if (token.length > 0) {
-            menu.add(1, 1, 1, userEmail)
-            menu.add(1, 2, 1, "Logout")
-        } else {
-            menu.add(2, 3, 2, "Login")
-            menu.add(2, 4, 2, "Signup")
+        if (token != null) {
+            if (token.length > 0) {
+                menu.add(1, 1, 1, userEmail)
+                menu.add(1, 2, 1, "Logout")
+            } else {
+                menu.add(2, 3, 2, "Login")
+                menu.add(2, 4, 2, "Signup")
+            }
         }
 
         inflater.inflate(R.menu.menu, menu)
@@ -227,11 +229,11 @@ class RecipeSearchActivity : AppCompatActivity() {
                 if (recipes.count() > 0) {
                     builder.setTitle("This may delete recipes that have not been saved to your online account. Continue?")
 
-                    builder.setPositiveButton("YES") { dialog, which ->
+                    builder.setPositiveButton("YES") { _, _ ->
                         logout()
                     }
 
-                    builder.setNegativeButton("No") { dialog, which ->
+                    builder.setNegativeButton("No") { _, _ ->
                         Toast.makeText(applicationContext, "Logout cancelled.", Toast.LENGTH_SHORT).show()
                     }
 

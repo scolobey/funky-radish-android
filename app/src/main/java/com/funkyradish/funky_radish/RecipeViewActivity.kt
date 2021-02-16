@@ -34,8 +34,8 @@ class RecipeViewActivity : AppCompatActivity() {
         recipeViewSwitch.setOnClickListener {
             saveRecipe(recipe.title)
 
-            val dir = intent.extras.getBoolean("direction")
-            intent.putExtra("direction", !dir)
+            val dir = intent?.extras?.getBoolean("direction")
+            intent.putExtra("direction", dir)
 
             loadRecipe()
             prepareRecipeView()
@@ -43,7 +43,7 @@ class RecipeViewActivity : AppCompatActivity() {
     }
 
     private fun loadRecipe() {
-        val recipeID: String = intent.getStringExtra("rid")
+        val recipeID: String? = intent.getStringExtra("rid")
         Log.d("API", "recipeId: ${recipeID}")
 
         recipe = realm.where(Recipe::class.java).equalTo("_id", recipeID).findFirst()!!
@@ -57,7 +57,7 @@ class RecipeViewActivity : AppCompatActivity() {
     }
 
     private fun saveRecipe(title: String?) {
-        val directionView = intent.extras.getBoolean("direction")
+        val directionView = intent?.extras?.getBoolean("direction")
         var textBoxContents = recipeViewContent.text.replace("(?m)\\s*$".toRegex(), "").split("\n")
 
         Log.d("API", "directions ${directionView}")
@@ -74,7 +74,7 @@ class RecipeViewActivity : AppCompatActivity() {
 
                 recipe.title = title
 
-                if(directionView) {
+                if(directionView!!) {
                     recipe.directions.deleteAllFromRealm()
 
                     for (i in textBoxContents) {
@@ -113,9 +113,9 @@ class RecipeViewActivity : AppCompatActivity() {
 
     private fun prepareRecipeView() {
 
-        val directionView = intent.extras.getBoolean("direction")
+        val directionView = intent?.extras?.getBoolean("direction")
 
-        if(directionView) {
+        if(directionView == true) {
             recipeViewTitle.text = "Directions"
 
             val finalContentString = buildContentString(true)
@@ -135,7 +135,7 @@ class RecipeViewActivity : AppCompatActivity() {
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Are you sure you want to permanently delete this recipe?")
 
-            builder.setPositiveButton("YES"){dialog, which ->
+            builder.setPositiveButton("YES"){ _, _ ->
                 realm.executeTransaction {
                     recipe.deleteFromRealm()
                     val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
@@ -144,7 +144,7 @@ class RecipeViewActivity : AppCompatActivity() {
                 }
             }
 
-            builder.setNegativeButton("No"){dialog,which ->
+            builder.setNegativeButton("No"){ _, _ ->
                 Toast.makeText(applicationContext,"Cancelled delete.",Toast.LENGTH_SHORT).show()
             }
 
@@ -163,18 +163,18 @@ class RecipeViewActivity : AppCompatActivity() {
             input.setText(recipe.title)
             builder.setView(input)
 
-            builder.setPositiveButton("OK") { dialog, which ->
+            builder.setPositiveButton("OK") { _, _ ->
                 val title = input.getText().toString().replace("^\\s*".toRegex(), "").replace("\\s*$".toRegex(), "")
 
                 saveRecipe(title)
 
                 finish()
 
-                var intent = getIntent()
+                var intent = intent
                 startActivity(intent)
             }
             builder.setNegativeButton("Cancel") {
-                dialog, which -> dialog.cancel()
+                dialog, _ -> dialog.cancel()
             }
 
             builder.show()
@@ -194,15 +194,15 @@ class RecipeViewActivity : AppCompatActivity() {
         if(isDirectionView) {
             val dirs = recipe.directions
 
-            for (i in 0 until dirs!!.size) {
-                contentString.append(dirs!![i]!!.text).append("\n")
+            for (i in 0 until dirs.size) {
+                contentString.append(dirs[i]!!.text).append("\n")
             }
         }
         else {
             val ings = recipe.ingredients
 
-            for (i in 0 until ings!!.size) {
-                contentString.append(ings!![i]!!.name).append("\n")
+            for (i in 0 until ings.size) {
+                contentString.append(ings[i]!!.name).append("\n")
             }
         }
 
@@ -210,7 +210,7 @@ class RecipeViewActivity : AppCompatActivity() {
     }
 
     private fun Activity.hideKeyboard() {
-        hideKeyboard(if (currentFocus == null) View(this) else currentFocus)
+        if (currentFocus == null) View(this) else currentFocus?.let { hideKeyboard(it) }
     }
 
     private fun Context.hideKeyboard(view: View) {

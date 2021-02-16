@@ -6,20 +6,15 @@ import io.realm.RealmResults
 class RecipeModel : RecipeInterface {
 
     override fun addRecipe(realm: Realm, recipe: Recipe): Boolean {
-        try {
+        return try {
             realm.beginTransaction()
 
-            if(recipe!=null) {
-                realm.copyToRealmOrUpdate(recipe)
-            }
-            else {
-                realm.copyToRealmOrUpdate(Recipe())
-            }
+            realm.copyToRealmOrUpdate(recipe)
             realm.commitTransaction()
-            return true
+            true
         } catch (e: Exception) {
             println(e)
-            return false
+            false
         }
     }
 

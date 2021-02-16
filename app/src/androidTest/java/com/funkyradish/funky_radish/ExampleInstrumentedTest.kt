@@ -1,7 +1,8 @@
 package com.funkyradish.funky_radish
 
-import android.support.test.InstrumentationRegistry
-import android.support.test.runner.AndroidJUnit4
+import android.content.Context
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.core.app.ApplicationProvider.getApplicationContext
 
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,7 +19,7 @@ class ExampleInstrumentedTest {
     @Test
     fun useAppContext() {
         // Context of the app under test.
-        val appContext = InstrumentationRegistry.getTargetContext()
+        val appContext: Context = getApplicationContext()
         assertEquals("com.funkyradish.funky_radish", appContext.packageName)
     }
 }
