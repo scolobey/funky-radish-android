@@ -54,39 +54,41 @@ class SignupActivity : AppCompatActivity() {
 
 //      TODO: Might need to check if there's already a user and then message to logout first.
 
-        var recipes = realm.where(Recipe::class.java).findAll()
-        var recipeList = realm.copyFromRealm(recipes)
+        //      TODO: Move this into the login section.
 
-        if (recipes.count() > 0) {
-            var plural = "recipes"
-            if (recipeList.count() < 2) {
-                plural = "recipe"
-            }
-
-            val builder = AlertDialog.Builder(this)
-            builder.setTitle("Transfer recipes?")
-            builder.setMessage("Detected ${recipeList.count()} $plural on this device. Should we copy this data to your new account?")
-
-            builder.setPositiveButton("yes") { _, _ ->
-                Log.d("API", "migrating: $recipeList")
-                launchSignup(email, password)
-            }
-            builder.setNegativeButton("cancel") { _, _ ->
-                Log.d("API", "canceling sign up.")
-                val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
-                startActivity(intent)
-            }
-            builder.setNeutralButton("no") { _, _ ->
-                recipeList.clear()
-                Log.d("API", "Emptying recipe list.")
-                launchSignup(email, password)
-            }
-
-            builder.show()
-        }
-        else {
+//        var recipes = realm.where(Recipe::class.java).findAll()
+//        var recipeList = realm.copyFromRealm(recipes)
+//
+//        if (recipes.count() > 0) {
+//            var plural = "recipes"
+//            if (recipeList.count() < 2) {
+//                plural = "recipe"
+//            }
+//
+//            val builder = AlertDialog.Builder(this)
+//            builder.setTitle("Transfer recipes?")
+//            builder.setMessage("Detected ${recipeList.count()} $plural on this device. Should we copy this data to your new account?")
+//
+//            builder.setPositiveButton("yes") { _, _ ->
+//                Log.d("API", "migrating: $recipeList")
+//                launchSignup(email, password)
+//            }
+//            builder.setNegativeButton("cancel") { _, _ ->
+//                Log.d("API", "canceling sign up.")
+//                val intent = Intent(this, RecipeSearchActivity::class.java).apply {}
+//                startActivity(intent)
+//            }
+//            builder.setNeutralButton("no") { _, _ ->
+//                recipeList.clear()
+//                Log.d("API", "Emptying recipe list.")
+//                launchSignup(email, password)
+//            }
+//
+//            builder.show()
+//        }
+//        else {
             launchSignup(email, password)
-        }
+//        }
     }
 
     private fun launchSignup(email: String, password: String) {
@@ -130,7 +132,7 @@ class SignupActivity : AppCompatActivity() {
     }
 
 
-    fun loginSegue() {
+    fun loginSegue(view: View) {
         val intent = Intent(this, LoginActivity::class.java).apply {}
         startActivity(intent)
     }

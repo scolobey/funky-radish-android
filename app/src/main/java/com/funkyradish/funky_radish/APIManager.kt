@@ -98,12 +98,10 @@ fun register(activity: Activity, queue: RequestQueue, email: String, password: S
                             activity.applicationContext,
                             userResponse.message,
                             Toast.LENGTH_SHORT).show()
-
                     callback(false)
                 }
             },
             Response.ErrorListener { error ->
-                Log.d("API", "error on createUser: ${error}")
                 error.printStackTrace()
 
                 var errorMessage = error.toString()

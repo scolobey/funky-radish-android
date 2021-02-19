@@ -35,7 +35,7 @@ class RecipeViewActivity : AppCompatActivity() {
             saveRecipe(recipe.title)
 
             val dir = intent?.extras?.getBoolean("direction")
-            intent.putExtra("direction", dir)
+            intent.putExtra("direction", !dir!!)
 
             loadRecipe()
             prepareRecipeView()

@@ -121,7 +121,7 @@ class LoginActivity : AppCompatActivity() {
         }).start()
     }
 
-    fun signupSegue() {
+    fun signupSegue(view: View) {
         val intent = Intent(this, SignupActivity::class.java).apply {
         }
         startActivity(intent)
