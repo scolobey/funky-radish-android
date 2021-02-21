@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Funky Radish</string>
     <string name="signup_button">Signup</string>
-    <string name="login_button">Signup</string>
+    <string name="login_button">Login</string>
     <string name="settings_login">Login</string>
     <string name="settings_logout">Log Out</string>
     <string name="settings_signup">Signup</string>
