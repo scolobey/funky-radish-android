@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RecipeViewActivity">
+    tools:context=".RecipeViewActivity"
+    android:keepScreenOn="true">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
@@ -16,16 +17,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:navigationIcon="@drawable/radish_medium">
-
-        <Button
-            android:id="@+id/action_save"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/save"
-            android:layout_gravity="right"/>
-
-    </androidx.appcompat.widget.Toolbar>
+        app:navigationIcon="@drawable/radish_medium"/>
 
     <Switch
         android:id="@+id/recipeViewSwitch"

@@ -8,7 +8,6 @@ import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -53,7 +52,6 @@ class RecipeViewActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         getSupportActionBar()!!.setTitle(recipe.title);
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        prepareSaveButton()
     }
 
     private fun saveRecipe(title: String?) {
@@ -98,16 +96,6 @@ class RecipeViewActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
-    }
-
-    private fun prepareSaveButton() {
-        val saveButton = findViewById<Button>(R.id.action_save)
-
-        saveButton.setOnClickListener {
-            saveRecipe(recipe.title)
-            loadRecipe()
-            this.hideKeyboard()
         }
     }
 

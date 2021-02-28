@@ -2,10 +2,11 @@ package com.funkyradish.funky_radish
 
 import android.app.Activity
 import android.content.Context
-import android.net.ConnectivityManager
+import android.content.Intent
 import androidx.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import com.android.volley.*
 import com.android.volley.toolbox.*
 import com.google.gson.GsonBuilder
@@ -66,12 +67,6 @@ fun toggleOfflineMode(context: Context) {
     editor.putBoolean(Constants.OFFLINE, !offline)
     editor.apply()
 }
-
-//fun isConnected(context: Context): Boolean {
-//    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-//    val networkInfo = connectivityManager.activeNetworkInfo
-//    return networkInfo != null && networkInfo.isConnected
-//}
 
 //TODO: get rid of the importRecipes
 fun register(activity: Activity, queue: RequestQueue, email: String, password: String, callback: (success: Boolean) -> Unit) {
@@ -134,16 +129,6 @@ fun register(activity: Activity, queue: RequestQueue, email: String, password: S
 
     queue.add(userRequest)
 
-//    if(isConnected(activity.applicationContext)) {
-//        queue.add(userRequest)
-//    }
-//    else {
-//        Toast.makeText(
-//                activity.applicationContext,
-//                "Unable to connect to internet",
-//                Toast.LENGTH_SHORT).show()
-//    }
-
 }
 
 fun login(activity: Activity, queue: RequestQueue, email: String, password: String, importRecipes: List<Recipe?>, callback: (success: Boolean) -> Unit) {
@@ -205,18 +190,6 @@ fun login(activity: Activity, queue: RequestQueue, email: String, password: Stri
     }
 
     queue.add(authRequest)
-
-//    //TODO: Do we really need to check connection?
-//    if(isConnected(activity.applicationContext)) {
-//        queue.add(authRequest)
-//    }
-//    else {
-//        Toast.makeText(
-//                activity.applicationContext,
-//                "Unable to connect to internet",
-//                Toast.LENGTH_SHORT).show()
-//    }
-
 }
 
 fun createRealmUser(token: String, recipeList: List<Recipe?>, callback: (success: Boolean) -> Unit, activity: Activity) {
@@ -312,7 +285,6 @@ fun bulkInsertRecipes(recipeList: List<Recipe?>) {
                 e.printStackTrace()
             }
         }
-//        realm.close()
     }
 }
 
